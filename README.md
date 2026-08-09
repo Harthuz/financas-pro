@@ -6,15 +6,19 @@ Este projeto é um sistema de controle de despesas integrado com a API do Notion
 
 ```text
 NotionAPI/
-├── backend/               # Código do Backend (FastAPI)
-│   ├── api.py            # Servidor FastAPI com as rotas
+├── backend/               # Código do Backend (FastAPI e Node/Express)
+│   ├── api.py            # Servidor FastAPI (Python) com as rotas
+│   ├── server.js         # Servidor Express (Node.js) utilizado no container Docker
 │   ├── main.py           # Script de teste/consulta simples no terminal
 │   ├── export_csv.py     # Script independente para exportar despesas para CSV
+│   ├── Dockerfile        # Configuração da imagem Docker do backend
 │   └── requirements.txt  # Dependências Python do backend
-├── frontend/              # Código do Frontend (React + Vite)
+├── frontend/              # Código do Frontend (React + Vite + Material UI)
 │   ├── src/              # Componentes e lógica da aplicação
 │   ├── package.json      # Dependências e scripts do frontend
+│   ├── Dockerfile        # Configuração da imagem Docker (Multi-stage com Nginx)
 │   └── ...
+├── docker-compose.yml    # Orquestração dos serviços (PostgreSQL, Backend, Frontend)
 ├── .env                  # Arquivo de configuração de credenciais (Notion)
 ├── .gitignore            # Arquivos ignorados pelo Git
 └── README.md             # Documentação do projeto (este arquivo)
@@ -77,12 +81,49 @@ NOTION_DATABASE_ID=seu_id_do_banco_de_dados_aqui
 
 ### 3. Executando via Docker (Orquestração Completa)
 
-Se você possuir o **Docker** e o **Docker Compose** instalados na sua máquina:
+O projeto possui suporte completo a **Docker** e **Docker Compose**, subindo uma pilha isolada composta por três serviços:
 
-1. Na raiz do projeto, execute o comando:
+- **`db`**: Banco de dados PostgreSQL 16 (`gastos_db`) executando na porta `5432`.
+- **`backend`**: Servidor de API executando na porta `8000`.
+- **`frontend`**: Aplicação React servida via Nginx na porta `8080`.
+
+#### Passo a Passo para Execução:
+
+1. Garanta que o arquivo `.env` está configurado na raiz do projeto com suas credenciais do Notion.
+2. Na raiz do projeto, inicie os containers:
    ```bash
    docker compose up --build
    ```
-2. Acesse as aplicações:
-   - **Frontend:** `http://localhost` (na porta padrão 80)
-   - **Backend:** `http://localhost:8000`
+   *Dica: Adicione `-d` ao final do comando para executar em segundo plano (detached mode):*
+   ```bash
+   docker compose up --build -d
+   ```
+3. Acesse os serviços disponíveis:
+   - **Frontend (React + Nginx):** `http://localhost:8080`
+   - **Backend (API):** `http://localhost:8000`
+   - **PostgreSQL:** `localhost:5432` *(User: `postgres`, Pass: `postgres`, DB: `gastos_db`)*
+
+#### Comandos Úteis do Docker:
+
+- **Verificar status dos containers:**
+  ```bash
+  docker compose ps
+  ```
+- **Acompanhar os logs em tempo real:**
+  ```bash
+  docker compose logs -f
+  # Ou logs de um serviço específico (ex: backend):
+  docker compose logs -f backend
+  ```
+- **Parar e remover os containers:**
+  ```bash
+  docker compose down
+  ```
+- **Parar os containers e apagar o volume de dados do PostgreSQL:**
+  ```bash
+  docker compose down -v
+  ```
+- **Recompilar e reiniciar apenas um serviço:**
+  ```bash
+  docker compose up -d --build backend
+  ```
