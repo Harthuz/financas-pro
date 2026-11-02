@@ -8,37 +8,69 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: gastos_db
     ports:
-      - "5432:5432"
+    - 5433:5432
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+    - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d gastos_db"]
+      test:
+      - CMD-SHELL
+      - pg_isready -U postgres -d gastos_db
       interval: 5s
       timeout: 5s
       retries: 5
-
+    networks:
+    - default
+    - npm_network
   backend:
     build: ./backend
     container_name: gastos_backend
     ports:
-      - "8000:8000"
+    - 8000:8000
     env_file:
-      - .env
+    - .env
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/gastos_db
+    - DATABASE_URL=postgresql://postgres:postgres@db:5432/gastos_db
     restart: always
     depends_on:
       db:
         condition: service_healthy
-
+    networks:
+    - default
+    - npm_network
   frontend:
     build: ./frontend
     container_name: gastos_frontend
     ports:
-      - "8080:80"
+    - 8080:80
+    volumes:
+    - ./diretrizes/diretrizes.json:/usr/share/nginx/html/diretrizes.json:ro
+    - ./GEMINI.md:/usr/share/nginx/html/GEMINI.md:ro
+    - ./GEMINI.md:/usr/share/nginx/html/DIRETRIZES.md:ro
+    - ./mcp_server.py:/usr/share/nginx/html/mcp_server.py:ro
     restart: always
     depends_on:
-      - backend
-
+    - backend
+    networks:
+    - default
+    - npm_network
+  diretrizes:
+    image: nginx:alpine
+    container_name: gastos_diretrizes
+    ports:
+    - 8084:80
+    volumes:
+    - ./diretrizes/index.html:/usr/share/nginx/html/index.html:ro
+    - ./diretrizes/diretrizes.json:/usr/share/nginx/html/diretrizes.json:ro
+    - ./GEMINI.md:/usr/share/nginx/html/GEMINI.md:ro
+    - ./GEMINI.md:/usr/share/nginx/html/DIRETRIZES.md:ro
+    - ./mcp_server.py:/usr/share/nginx/html/mcp_server.py:ro
+    - ./diretrizes/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: always
+    networks:
+    - default
+    - npm_network
 volumes:
-  postgres_data:
+  postgres_data: null
+networks:
+  npm_network:
+    external: true

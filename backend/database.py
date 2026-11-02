@@ -13,7 +13,11 @@ if not DATABASE_URL:
     # Default fallback for local environment
     DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/gastos_db"
 
-engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+connect_args = {}
+if "supabase.co" in DATABASE_URL or "supabase.com" in DATABASE_URL:
+    connect_args["sslmode"] = "require"
+
+engine = create_engine(DATABASE_URL, pool_pre_ping=True, connect_args=connect_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 

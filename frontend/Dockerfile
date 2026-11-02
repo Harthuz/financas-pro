@@ -16,6 +16,7 @@ FROM nginx:alpine
 
 # Copia os arquivos compilados do Vite para a pasta pública do Nginx
 COPY --from=build /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Expõe a porta padrão do Nginx
 EXPOSE 80

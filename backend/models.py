@@ -1,5 +1,6 @@
 import datetime
 from sqlalchemy import Column, Integer, String, Numeric, Date, DateTime, ForeignKey
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -9,6 +10,7 @@ class Categoria(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     nome = Column(String(100), unique=True, nullable=False, index=True)
     cor = Column(String(30), nullable=True)
+    user_id = Column(UUID(as_uuid=True), nullable=True, index=True)
     criado_em = Column(DateTime, default=datetime.datetime.utcnow)
 
     # Relacionamento com Gastos
@@ -21,6 +23,7 @@ class Conta(Base):
     nome = Column(String(100), unique=True, nullable=False, index=True)
     tipo_conta = Column(String(50), nullable=True) # ex: Crédito, Débito, VR, VA, Pix
     cor = Column(String(30), nullable=True)
+    user_id = Column(UUID(as_uuid=True), nullable=True, index=True)
     criado_em = Column(DateTime, default=datetime.datetime.utcnow)
 
     # Relacionamento com Gastos
@@ -35,6 +38,7 @@ class Gasto(Base):
     data = Column(Date, nullable=False)
     criado_em = Column(DateTime, default=datetime.datetime.utcnow)
     notion_id = Column(String(100), nullable=True, unique=True)
+    user_id = Column(UUID(as_uuid=True), nullable=True, index=True)
 
     # Foreign Keys restritivas
     categoria_id = Column(Integer, ForeignKey("categorias.id", ondelete="RESTRICT"), nullable=False)

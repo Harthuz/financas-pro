@@ -11,13 +11,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['pwa-192x192.png', 'pwa-512x512.png'],
+      includeAssets: ['favicon.svg', 'favicon-32x32.png', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Controle de Gastos Notion',
-        short_name: 'Gastos Notion',
-        description: 'Dashboard financeiro integrado ao Notion em tempo real',
-        theme_color: '#2E5A44',
-        background_color: '#F5F7F6',
+        name: 'Finanças Pro',
+        short_name: 'Finanças',
+        description: 'Dashboard financeiro com Stage de extratos, API e MCP',
+        theme_color: '#090D16',
+        background_color: '#090D16',
         display: 'standalone',
         orientation: 'portrait',
         icons: [
@@ -32,10 +32,10 @@ export default defineConfig({
             type: 'image/png'
           },
           {
-            src: 'pwa-512x512.png',
+            src: 'maskable-512x512.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'maskable'
           }
         ]
       }

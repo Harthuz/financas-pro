@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Diretrizes de Comunicação - Controle de Finanças (API & MCP)</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --danger: #f43f5e;
+      --danger-bg: rgba(244, 63, 94, 0.12);
+      --success: #22c55e;
+      --code-bg: #090d16;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 32px 16px;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    h1, h2, h3 { color: #fff; margin-top: 0; }
+    h1 { font-size: 1.9rem; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+    h2 { font-size: 1.35rem; margin-top: 24px; color: var(--accent); }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+    }
+    .alert-critical {
+      background: var(--danger-bg);
+      border: 2px solid var(--danger);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+    }
+    .alert-critical h2 { color: #fda4af; margin-top: 0; }
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      background: var(--code-bg);
+      border-radius: 6px;
+    }
+    code { padding: 2px 6px; color: #e2e8f0; }
+    pre {
+      padding: 14px;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      color: #e2e8f0;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .links-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .btn {
+      display: inline-block;
+      background: #1e293b;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    .btn:hover { background: var(--accent); color: #0f172a; text-decoration: none; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    th { color: var(--muted); font-size: 0.85rem; text-transform: uppercase; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📋 Diretrizes de Comunicação — Controle de Finanças (API & MCP)</h1>
+    <p>Documento oficial de diretrizes para agentes de IA (MCP) e clientes HTTP na rede local.</p>
+
+    <div class="links-bar">
+      <a class="btn" href="/DIRETRIZES.md">📄 Ler em Markdown (/DIRETRIZES.md)</a>
+      <a class="btn" href="/GEMINI.md">🤖 Regras de Agente (/GEMINI.md)</a>
+      <a class="btn" href="/diretrizes.json">📦 Especificação JSON (/diretrizes.json)</a>
+      <a class="btn" href="/mcp_server.py">🐍 Baixar Script MCP (/mcp_server.py)</a>
+      <a class="btn" href="http://192.168.15.15:8000/api/exportar">💾 Baixar Backup CSV Agora</a>
+    </div>
+
+    <div class="alert-critical">
+      <h2>🚨 REGRA #1 (OBRIGATÓRIA): Backup em CSV Antes de Qualquer Lote de Modificação</h2>
+      <p>
+        <strong>SEMPRE faça backup antes de qualquer lote de modificação</strong> (criação, edição ou exclusão de gastos, categorias ou contas).
+        O backup deve ser salvo em formato <strong>CSV na pasta <code>Downloads</code> (<code>~/Downloads</code>) do próprio dispositivo que estiver fazendo a modificação via MCP ou API</strong>.
+      </p>
+      <ul>
+        <li><strong>Via MCP:</strong> Execute obrigatoriamente a ferramenta <code>fazer_backup_csv()</code> antes de chamar <code>adicionar_gasto</code>, <code>atualizar_gasto</code>, <code>excluir_gasto</code>, <code>adicionar_categoria</code> ou <code>adicionar_conta</code>.</li>
+        <li><strong>Via Terminal (Linux / macOS no dispositivo cliente):</strong>
+          <pre>curl -fSL "http://192.168.15.15:8000/api/exportar" -o "$HOME/Downloads/gastos_backup_$(date +%Y%m%d_%H%M%S).csv"</pre>
+        </li>
+        <li><strong>Via PowerShell (Windows no dispositivo cliente):</strong>
+          <pre>Invoke-WebRequest -Uri "http://192.168.15.15:8000/api/exportar" -OutFile "$HOME\Downloads\gastos_backup_$(Get-Date -Format 'yyyyMMdd_HHmmss').csv"</pre>
+        </li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>🌐 Mapa de Serviços e Portas na Rede</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Serviço</th>
+            <th>Porta</th>
+            <th>URL Rede Local (LAN)</th>
+            <th>URL Tailscale</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Frontend Web (UI)</strong></td>
+            <td><code>8080</code></td>
+            <td><a href="http://192.168.15.15:8080">http://192.168.15.15:8080</a></td>
+            <td><code>http://<IP_TAILSCALE>:8080</code></td>
+          </tr>
+          <tr>
+            <td><strong>Backend REST API</strong></td>
+            <td><code>8000</code></td>
+            <td><a href="http://192.168.15.15:8000/api/metadados">http://192.168.15.15:8000</a></td>
+            <td><code>http://<IP_TAILSCALE>:8000</code></td>
+          </tr>
+          <tr>
+            <td><strong>Diretrizes de Comunicação</strong></td>
+            <td><code>8084</code></td>
+            <td><a href="http://192.168.15.15:8084">http://192.168.15.15:8084</a></td>
+            <td><code>http://<IP_TAILSCALE>:8084</code></td>
+          </tr>
+          <tr>
+            <td><strong>PostgreSQL Database</strong></td>
+            <td><code>5433</code></td>
+            <td><code>192.168.15.15:5433</code> (<code>gastos_db</code>)</td>
+            <td><code><IP_TAILSCALE>:5433</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>📌 Regras de Negócio para Lançamento de Finanças</h2>
+      <ol>
+        <li><strong>Backup Primeiro:</strong> Garanta que o CSV de backup foi salvo em <code>~/Downloads</code> no dispositivo que fará a alteração antes de iniciar o lote.</li>
+        <li><strong>Verifique primeiro:</strong> Sempre consulte as categorias e contas existentes (via <code>obter_metadados</code> no MCP ou <code>GET /api/metadados</code> na API) antes de realizar inserções.</li>
+        <li><strong>Reutilize padrões:</strong> Utilize o padrão exato de nomenclatura das categorias (<code>tipo</code>) e métodos de pagamento (<code>conta</code>) já cadastrados.</li>
+        <li><strong>NUNCA crie sem permissão:</strong> Se o gasto não se encaixar em nenhuma categoria ou conta existente, pause e <strong>pergunte expressamente ao usuário</strong> se ele deseja criar a categoria/conta nova ou usar uma já existente.</li>
+        <li><strong>Formato dos Campos:</strong>
+          <ul>
+            <li><code>nome</code>: Texto descritivo (se terminar em <code>1/N</code> ou <code>(1/N)</code>, ex: <code>Compra - 1/6</code>, o backend criará automaticamente as parcelas seguintes nos próximos meses).</li>
+            <li><code>valor</code>: Número decimal em R$ (ex: <code>34.15</code>).</li>
+            <li><code>tipo</code>: Nome exato da Categoria.</li>
+            <li><code>conta</code>: Nome exato da Conta / Método de Pagamento.</li>
+            <li><code>data</code>: Data no formato <code>YYYY-MM-DD</code>.</li>
+          </ul>
+        </li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h2>🔌 Como Conectar Outro PC da Rede via MCP</h2>
+      <p>Qualquer computador na rede pode usar o servidor MCP apontando para a API central (<code>http://192.168.15.15:8000</code>). Assim, quando a ferramenta <code>fazer_backup_csv()</code> for chamada, o backup CSV será salvo diretamente na pasta <code>~/Downloads</code> do computador que estiver executando o MCP.</p>
+      <pre># 1. Baixe o script MCP atualizado
+curl -fSL http://192.168.15.15:8084/mcp_server.py -o ~/mcp_server.py
+
+# 2. Instale as bibliotecas necessárias
+pip install mcp requests</pre>
+      <p>Adicione no arquivo <code>mcp_config.json</code> do agente no outro PC:</p>
+      <pre>{
+  "mcpServers": {
+    "financas": {
+      "command": "python3",
+      "args": ["/caminho/para/mcp_server.py"],
+      "env": {
+        "FINANCAS_API_URL": "http://192.168.15.15:8000"
+      }
+    }
+  }
+}</pre>
+    </div>
+
+    <div class="card">
+      <h2>🛠️ Ferramentas MCP & Endpoints da API</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Ferramenta MCP</th>
+            <th>Endpoint REST Equivalente</th>
+            <th>Descrição</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>fazer_backup_csv(nome_arquivo?)</code></td>
+            <td><code>GET /api/exportar</code></td>
+            <td><strong>Obrigatório antes de modificações.</strong> Salva CSV em <code>~/Downloads</code>.</td>
+          </tr>
+          <tr>
+            <td><code>obter_metadados()</code></td>
+            <td><code>GET /api/metadados</code></td>
+            <td>Lista nomes de todas as categorias (<code>tipos</code>) e <code>contas</code>.</td>
+          </tr>
+          <tr>
+            <td><code>listar_gastos()</code></td>
+            <td><code>GET /api/gastos</code></td>
+            <td>Lista todos os gastos cadastrados.</td>
+          </tr>
+          <tr>
+            <td><code>adicionar_gasto(...)</code></td>
+            <td><code>POST /api/gastos</code></td>
+            <td>Cria novo gasto (<code>nome, valor, tipo, conta, data</code>).</td>
+          </tr>
+          <tr>
+            <td><code>atualizar_gasto(gasto_id, ...)</code></td>
+            <td><code>PATCH /api/gastos/:id</code></td>
+            <td>Atualiza campos de um gasto existente.</td>
+          </tr>
+          <tr>
+            <td><code>excluir_gasto(gasto_id)</code></td>
+            <td><code>DELETE /api/gastos/:id</code></td>
+            <td>Remove um gasto pelo ID.</td>
+          </tr>
+          <tr>
+            <td><code>listar_categorias()</code></td>
+            <td><code>GET /api/categorias</code></td>
+            <td>Lista categorias com contagem de gastos vinculados.</td>
+          </tr>
+          <tr>
+            <td><code>adicionar_categoria(nome, cor?)</code></td>
+            <td><code>POST /api/categorias</code></td>
+            <td>Cria nova categoria (apenas com permissão do usuário).</td>
+          </tr>
+          <tr>
+            <td><code>listar_contas()</code></td>
+            <td><code>GET /api/contas</code></td>
+            <td>Lista contas/métodos de pagamento com contagem de gastos.</td>
+          </tr>
+          <tr>
+            <td><code>adicionar_conta(nome, tipo_conta?, cor?)</code></td>
+            <td><code>POST /api/contas</code></td>
+            <td>Cria nova conta (apenas com permissão do usuário).</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

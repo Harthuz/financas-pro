@@ -2,16 +2,150 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/pwa-192x192.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#2E5A44" />
+    <meta name="theme-color" content="#090D16" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <link rel="apple-touch-icon" href="/pwa-192x192.png" />
-    <title>Controle de Gastos Notion</title>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Finanças Pro" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="mcp-server" content="http://192.168.15.15:8080/mcp" />
+    <meta name="mcp-sse" content="http://192.168.15.15:8080/sse" />
+    <meta name="mcp-tools" content="http://192.168.15.15:8080/mcp/tools" />
+    <meta name="mcp-diretrizes" content="http://192.168.15.15:8080/DIRETRIZES.md" />
+    <meta name="api-tudo" content="http://192.168.15.15:8080/api/tudo" />
+    <meta name="api-gastos" content="http://192.168.15.15:8080/api/gastos" />
+    <meta name="api-metadados" content="http://192.168.15.15:8080/api/metadados" />
+    <meta name="api-exportar-csv" content="http://192.168.15.15:8080/api/exportar" />
+    <link rel="mcp-server" href="/mcp" />
+    <link rel="service-doc" href="/DIRETRIZES.md" />
+    <title>Finanças Pro</title>
+    <script id="mcp-specification" type="application/json">
+      {
+        "mcp_server": {
+          "name": "Financas",
+          "version": "1.2.0",
+          "protocolVersion": "2024-11-05",
+          "streamable_http_url": "http://192.168.15.15:8080/mcp",
+          "sse_url": "http://192.168.15.15:8080/sse",
+          "rest_tools_url": "http://192.168.15.15:8080/mcp/tools",
+          "diretrizes_markdown_url": "http://192.168.15.15:8080/DIRETRIZES.md",
+          "stdio_script_url": "http://192.168.15.15:8080/mcp_server.py"
+        },
+        "http_get_endpoints_port_8080": {
+          "get_tudo": "GET http://192.168.15.15:8080/api/tudo",
+          "get_gastos": "GET http://192.168.15.15:8080/api/gastos",
+          "buscar_gastos": "GET http://192.168.15.15:8080/api/gastos?search=TERMO",
+          "get_metadados": "GET http://192.168.15.15:8080/api/metadados",
+          "get_categorias": "GET http://192.168.15.15:8080/api/categorias",
+          "get_contas": "GET http://192.168.15.15:8080/api/contas",
+          "get_backup_csv": "GET http://192.168.15.15:8080/api/exportar",
+          "get_mcp_manifest": "GET http://192.168.15.15:8080/mcp"
+        },
+        "http_post_nova_compra_port_8080": {
+          "post_stage_transicao_extratos": "POST http://192.168.15.15:8080/api/stage",
+          "get_stage_transicao": "GET http://192.168.15.15:8080/api/stage",
+          "commit_stage_dar_baixa": "POST http://192.168.15.15:8080/api/stage/commit",
+          "stage_web_ui": "http://192.168.15.15:8080/stage",
+          "post_gasto_api": "POST http://192.168.15.15:8080/api/gastos",
+          "post_gasto_mcp_rest": "POST http://192.168.15.15:8080/mcp/tools/adicionar_gasto",
+          "post_gasto_mcp_jsonrpc": "POST http://192.168.15.15:8080/mcp",
+          "required_fields": ["nome", "valor", "tipo", "conta", "data"],
+          "optional_fields": ["descricao", "localizacao", "fixo"]
+        }
+      }
+    </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <main data-mcp-discovery="financas-port-8080" style="font-family: system-ui, sans-serif; max-width: 920px; margin: 24px auto; padding: 20px;">
+        <h1>Servidor MCP &amp; API HTTP de Controle de Finanças (Porta 8080)</h1>
+        <p>Este servidor na porta <strong>8080</strong> (<code>http://192.168.15.15:8080</code>) expõe diretamente o <strong>MCP de Finanças</strong>, a <strong>Zona de Stage de Extratos (<code>/stage</code>)</strong> e a <strong>API REST completa</strong> para leitura (GET em tudo) e lançamento de novas compras (POST).</p>
+
+        <h2>0. Zona de Stage / Transição de Extratos Bancários (Playground MCP — <code>/stage</code>)</h2>
+        <p>Quando o agente comparar os extratos bancários com as baixas já registradas (<code>GET /api/gastos</code>), envie as compras novas ainda não baixadas (mesmo com colunas incompletas que o usuário precisará preencher) para o <strong>Stage</strong>:</p>
+        <ul>
+          <li><strong>Interface Web do Stage (Planilha de Revisão e Baixa em 1 Clique):</strong> <code>http://192.168.15.15:8080/stage</code></li>
+          <li><strong>Listar Itens no Stage:</strong> <code>GET http://192.168.15.15:8080/api/stage</code> (ou MCP <code>listar_stage</code>)</li>
+          <li><strong>Enviar 1 ou Lote de Itens do Extrato para o Stage:</strong> <code>POST http://192.168.15.15:8080/api/stage</code> (ou MCP <code>adicionar_stage</code>)
+            <pre>{
+  "limpar_anterior": false,
+  "itens": [
+    {
+      "data": "2026-11-02",
+      "nome": "",
+      "valor": 89.90,
+      "tipo": "",
+      "conta": "Crédito Nubank",
+      "descricao": "",
+      "localizacao": "",
+      "texto_extrato": "02/11 PAG*MERCADOLIVRE R$ 89,90",
+      "observacao_agente": "Não consegui inferir o item comprado nem a categoria"
+    }
+  ]
+}</pre>
+          </li>
+          <li><strong>Dar Baixa Definitiva nos Itens Prontos do Stage:</strong> <code>POST http://192.168.15.15:8080/api/stage/commit</code> (ou clicar no botão <em>Dar Baixa</em> em <code>/stage</code>)</li>
+        </ul>
+
+        <h2>1. Como dar GET em tudo na porta 8080</h2>
+        <ul>
+          <li><strong>GET Tudo Consolidado (Metadados + Categorias + Contas + Todos os Gastos):</strong> <code>GET http://192.168.15.15:8080/api/tudo</code></li>
+          <li><strong>GET Todos os Gastos:</strong> <code>GET http://192.168.15.15:8080/api/gastos</code> (filtro opcional: <code>?search=termo</code>)</li>
+          <li><strong>GET Metadados (Categorias, Contas, Locais e Orçamentos):</strong> <code>GET http://192.168.15.15:8080/api/metadados</code></li>
+          <li><strong>GET Categorias:</strong> <code>GET http://192.168.15.15:8080/api/categorias</code></li>
+          <li><strong>GET Contas / Métodos de Pagamento:</strong> <code>GET http://192.168.15.15:8080/api/contas</code></li>
+          <li><strong>GET Backup CSV Completo (Obrigatório antes de modificações):</strong> <code>GET http://192.168.15.15:8080/api/exportar</code></li>
+          <li><strong>GET Manifesto MCP e Ferramentas:</strong> <code>GET http://192.168.15.15:8080/mcp</code></li>
+          <li><strong>GET Diretrizes Completas (Markdown):</strong> <code>GET http://192.168.15.15:8080/DIRETRIZES.md</code></li>
+        </ul>
+
+        <h2>2. Regras Obrigatórias Antes de Dar Entrada em Novas Compras</h2>
+        <ol>
+          <li><strong>Backup CSV Primeiro:</strong> Antes de adicionar, editar ou excluir qualquer gasto, baixe o backup CSV em <code>GET http://192.168.15.15:8080/api/exportar</code> (ou execute a ferramenta MCP <code>fazer_backup_csv</code>) salvando em <code>~/Downloads/gastos_backup_YYYYMMDD_HHMMSS.csv</code>.</li>
+          <li><strong>Verifique Categorias e Contas Existentes:</strong> Consulte <code>GET http://192.168.15.15:8080/api/metadados</code> (ou <code>GET http://192.168.15.15:8080/api/tudo</code>) e reutilize exatamente os nomes de <code>tipo</code> (categoria) e <code>conta</code> (método de pagamento) existentes. Nunca crie categoria ou conta nova sem perguntar ao usuário.</li>
+        </ol>
+
+        <h2>3. Como dar Entrada de Novas Compras (POST na porta 8080)</h2>
+        <p><strong>Opção A — Via REST API na porta 8080:</strong> <code>POST http://192.168.15.15:8080/api/gastos</code> (ou <code>POST http://192.168.15.15:8080/mcp/tools/adicionar_gasto</code>)</p>
+        <pre>{
+  "nome": "Nome da Compra (se terminar com 1/N, ex: 'Tênis - 1/6', gera as N parcelas automaticamente)",
+  "valor": 45.90,
+  "tipo": "Alimentação",
+  "conta": "Crédito Nubank",
+  "data": "2026-11-02",
+  "descricao": "Descrição opcional da compra",
+  "localizacao": "Estabelecimento ou endereço opcional"
+}</pre>
+        <p><strong>Opção B — Via Protocolo MCP (JSON-RPC 2.0 Streamable-HTTP na porta 8080):</strong> <code>POST http://192.168.15.15:8080/mcp</code></p>
+        <pre>{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "adicionar_gasto",
+    "arguments": {
+      "nome": "Almoço",
+      "valor": 45.90,
+      "tipo": "Alimentação",
+      "conta": "Crédito Nubank",
+      "data": "2026-11-02",
+      "descricao": "Restaurante",
+      "localizacao": "Centro"
+    }
+  }
+}</pre>
+
+        <h2>4. Outras Operações e Ferramentas MCP na Porta 8080</h2>
+        <ul>
+          <li><strong>Atualizar Gasto:</strong> <code>PATCH http://192.168.15.15:8080/api/gastos/:id</code> ou <code>POST http://192.168.15.15:8080/mcp/tools/atualizar_gasto</code></li>
+          <li><strong>Excluir Gasto:</strong> <code>DELETE http://192.168.15.15:8080/api/gastos/:id</code> ou <code>POST http://192.168.15.15:8080/mcp/tools/excluir_gasto</code></li>
+          <li><strong>Conectar Cliente MCP via Rede (HTTP / SSE):</strong> URL Streamable-HTTP: <code>http://192.168.15.15:8080/mcp</code> | URL SSE: <code>http://192.168.15.15:8080/sse</code></li>
+          <li><strong>Baixar Script MCP Python (stdio):</strong> <code>GET http://192.168.15.15:8080/mcp_server.py</code></li>
+        </ul>
+      </main>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

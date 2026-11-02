@@ -1,0 +1,68 @@
+{
+  "sistema": "Controle de Finanças",
+  "versao_diretrizes": "1.2.0",
+  "rede": {
+    "ip_lan": "192.168.15.15",
+    "ip_tailscale": "<IP_TAILSCALE>",
+    "hostname": "<HOSTNAME>",
+    "portas": {
+      "unificada_ui_api_mcp": 8080,
+      "backend_api": 8000,
+      "diretrizes_comunicacao": 8084,
+      "postgres_db": 5433
+    },
+    "urls": {
+      "frontend": "http://192.168.15.15:8080",
+      "mcp_http_streamable": "http://192.168.15.15:8080/mcp",
+      "mcp_sse": "http://192.168.15.15:8080/sse",
+      "mcp_rest_tools": "http://192.168.15.15:8080/mcp/tools",
+      "api_base_8080": "http://192.168.15.15:8080/api",
+      "api_get_tudo": "http://192.168.15.15:8080/api/tudo",
+      "api_gastos": "http://192.168.15.15:8080/api/gastos",
+      "api_metadados": "http://192.168.15.15:8080/api/metadados",
+      "api_exportar_csv": "http://192.168.15.15:8080/api/exportar",
+      "diretrizes_markdown": "http://192.168.15.15:8080/DIRETRIZES.md",
+      "diretrizes_json": "http://192.168.15.15:8080/diretrizes.json",
+      "mcp_server_script": "http://192.168.15.15:8080/mcp_server.py"
+    }
+  },
+  "regras_obrigatorias": [
+    {
+      "id": "BACKUP_CSV_ANTES_DE_MODIFICAR",
+      "prioridade": "CRITICA",
+      "descricao": "SEMPRE faça backup em CSV na pasta Downloads (~/Downloads) do dispositivo que estiver fazendo a modificação via MCP ou API ANTES de iniciar qualquer lote de modificação (criação, atualização ou exclusão de gastos, categorias ou contas).",
+      "ferramenta_mcp": "fazer_backup_csv",
+      "endpoint_api": "GET http://192.168.15.15:8080/api/exportar",
+      "destino_local": "~/Downloads/gastos_backup_YYYYMMDD_HHMMSS.csv"
+    },
+    {
+      "id": "VERIFICAR_METADADOS_PRIMEIRO",
+      "prioridade": "ALTA",
+      "descricao": "Sempre consulte obter_metadados() (ou GET http://192.168.15.15:8080/api/metadados ou GET http://192.168.15.15:8080/api/tudo) antes de inserir ou alterar gastos para verificar as categorias e contas existentes."
+    },
+    {
+      "id": "REUTILIZAR_PADROES",
+      "prioridade": "ALTA",
+      "descricao": "Utilize exatamente a mesma grafia das categorias (tipo) e métodos de pagamento (conta) já cadastrados."
+    },
+    {
+      "id": "NAO_CRIAR_CATEGORIA_OU_CONTA_SEM_PERMISSAO",
+      "prioridade": "ALTA",
+      "descricao": "Se o gasto não se encaixar em nenhuma categoria ou conta existente, pause e pergunte expressamente ao usuário antes de criar."
+    }
+  ],
+  "ferramentas_mcp": [
+    "fazer_backup_csv",
+    "obter_tudo",
+    "obter_metadados",
+    "listar_gastos",
+    "buscar_gastos",
+    "adicionar_gasto",
+    "atualizar_gasto",
+    "excluir_gasto",
+    "listar_categorias",
+    "adicionar_categoria",
+    "listar_contas",
+    "adicionar_conta"
+  ]
+}

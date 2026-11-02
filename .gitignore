@@ -3,3 +3,20 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+
+# Dados financeiros pessoais (exports/backups) — nunca versionar
+gastos.csv
+gastos_backup_*.csv
+*.csv
+notion_export.json
+notion_search_raw.json
+backend/notion_export.json
+
+# Configs locais / da máquina
+supabase/.temp/
+.expo/
+.agents/
+mobile/
+patch_app.py
+frontend/dist/
+node_modules/

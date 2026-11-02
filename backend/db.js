@@ -16,6 +16,7 @@ async function initDB() {
         id SERIAL PRIMARY KEY,
         nome VARCHAR(100) UNIQUE NOT NULL,
         cor VARCHAR(30),
+        orcamento_mensal NUMERIC(10, 2) DEFAULT 0,
         criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
@@ -30,12 +31,38 @@ async function initDB() {
       CREATE TABLE IF NOT EXISTS gastos (
         id SERIAL PRIMARY KEY,
         nome TEXT NOT NULL,
+        descricao TEXT,
+        localizacao TEXT,
         valor NUMERIC(10, 2) NOT NULL,
         data DATE NOT NULL,
         criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         notion_id VARCHAR(100) UNIQUE,
+        parcela_grupo_id VARCHAR(64),
+        fixo BOOLEAN DEFAULT FALSE,
         categoria_id INTEGER NOT NULL REFERENCES categorias(id) ON DELETE RESTRICT,
         conta_id INTEGER NOT NULL REFERENCES contas(id) ON DELETE RESTRICT
+      );
+
+      ALTER TABLE gastos ADD COLUMN IF NOT EXISTS descricao TEXT;
+      ALTER TABLE gastos ADD COLUMN IF NOT EXISTS localizacao TEXT;
+      ALTER TABLE gastos ADD COLUMN IF NOT EXISTS parcela_grupo_id VARCHAR(64);
+      ALTER TABLE gastos ADD COLUMN IF NOT EXISTS fixo BOOLEAN DEFAULT FALSE;
+      ALTER TABLE categorias ADD COLUMN IF NOT EXISTS orcamento_mensal NUMERIC(10, 2) DEFAULT 0;
+
+      CREATE TABLE IF NOT EXISTS gastos_stage (
+        id SERIAL PRIMARY KEY,
+        nome TEXT DEFAULT '',
+        descricao TEXT DEFAULT '',
+        localizacao TEXT DEFAULT '',
+        valor NUMERIC(10, 2),
+        tipo TEXT DEFAULT '',
+        conta TEXT DEFAULT '',
+        data VARCHAR(20) DEFAULT '',
+        fixo BOOLEAN DEFAULT FALSE,
+        texto_extrato TEXT DEFAULT '',
+        observacao_agente TEXT DEFAULT '',
+        selecionado BOOLEAN DEFAULT TRUE,
+        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
     console.log('PostgreSQL Database tables initialized cleanly.');
