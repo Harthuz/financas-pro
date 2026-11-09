@@ -65,6 +65,11 @@ async function initDB() {
         criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
+    await client.query(`CREATE TABLE IF NOT EXISTS pluggy_importacoes (transaction_id TEXT PRIMARY KEY, importado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
+    await client.query(`CREATE TABLE IF NOT EXISTS dividas_financeiras (id SERIAL PRIMARY KEY, nome TEXT NOT NULL, valor NUMERIC(14,2) NOT NULL CHECK(valor >= 0), atualizado_em TIMESTAMPTZ DEFAULT NOW());
+      CREATE TABLE IF NOT EXISTS planos_financeiros (
+      id SERIAL PRIMARY KEY, documento JSONB NOT NULL, criado_em TIMESTAMPTZ DEFAULT NOW()
+    )`);
     console.log('PostgreSQL Database tables initialized cleanly.');
   } catch (err) {
     console.error('Error initializing database tables:', err);

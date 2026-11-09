@@ -1,3 +1,4 @@
+name: financas-pro
 services:
   db:
     image: postgres:16-alpine
@@ -22,6 +23,8 @@ services:
     - default
     - npm_network
   backend:
+    dns:
+    - 192.168.15.1
     build: ./backend
     container_name: gastos_backend
     ports:
@@ -70,7 +73,9 @@ services:
     - default
     - npm_network
 volumes:
-  postgres_data: null
+  postgres_data:
+    # Mantém o volume criado quando a pasta se chamava controle-financas
+    name: controle-financas_postgres_data
 networks:
   npm_network:
     external: true

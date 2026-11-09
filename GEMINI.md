@@ -24,6 +24,7 @@ Ao adicionar ou editar gastos utilizando a ferramenta de finanças (MCP ou API n
    - `valor`: Número decimal em reais (`float`, ex: `34.15`).
    - `data`: Formato ISO `YYYY-MM-DD` (ex: `2026-11-02`).
    - Parcelamentos automáticos: se o `nome` terminar com `1/N` ou `(1/N)` (ex: `Tênis - 1/6`), o backend gera automaticamente as parcelas `2/N` até `N/N` nos meses subsequentes.
+6. **Não exiba investimentos zerados**: Ao consultar o planejamento (`obter_planejamento` ou `GET /api/planejamento`), ignore e não liste investimentos com saldo R$ 0,00 em respostas, análises ou previsões. A API já os omite da lista de ativos.
 
 ## 3. Endereços e Portas na Rede
 - **IP na Rede Local (LAN)**: `192.168.15.15` (Tailscale: `<IP_TAILSCALE>`)

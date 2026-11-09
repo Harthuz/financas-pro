@@ -9,6 +9,7 @@ import {
   ButtonGroup,
   TextField,
   Table,
+  TablePagination,
   TableBody,
   TableCell,
   TableContainer,
@@ -52,13 +53,13 @@ import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 const GRID = {
   rowHeight: 36,
   border: '1px solid rgba(148, 163, 184, 0.14)',
-  headBg: '#0D1320',
-  rowBg: '#111827',
+  headBg: '#111418',
+  rowBg: '#15181D',
   rowAltBg: '#0F1522',
   rowSelectedBg: '#10231F',
   rowHoverBg: '#162033',
   missingBg: 'rgba(245, 158, 11, 0.12)',
-  focusRing: 'inset 0 0 0 2px #10B981'
+  focusRing: 'inset 0 0 0 2px #3A9C74'
 };
 
 // Colunas na ordem exibida. As duas primeiras ficam fixas à esquerda durante a rolagem horizontal.
@@ -92,7 +93,7 @@ const cellInputSx = (falta, align = 'left') => ({
   },
   '& .MuiInputBase-root.Mui-focused': {
     boxShadow: GRID.focusRing,
-    bgcolor: 'rgba(16, 185, 129, 0.06)'
+    bgcolor: 'rgba(58, 156, 116, 0.06)'
   },
   '& .MuiInputBase-input': {
     p: 0,
@@ -250,10 +251,17 @@ const calcularStatusItem = (item) => {
 };
 
 export default function StagePage({ onNavigateHome }) {
+  const [pagina, setPagina] = useState(0);
+  const [tamanhoPagina, setTamanhoPagina] = useState(25);
+  const [resumoStage, setResumoStage] = useState({ total: 0, prontos_para_commit: 0, incompletos: 0, total_filtrado: 0 });
+  const [buscaServidor, setBuscaServidor] = useState('');
+  const requisicaoStage = useRef(0);
+  const metaCarregada = useRef(false);
   const [itens, setItens] = useState([]);
   const [metadados, setMetadados] = useState({ tipos: [], contas: [], locais: [] });
   const [loading, setLoading] = useState(true);
   const [savingStatus, setSavingStatus] = useState({});
+  const [syncingPluggy, setSyncingPluggy] = useState(false);
   const [committing, setCommitting] = useState(false);
   const [filtroStatus, setFiltroStatus] = useState('todos'); // 'todos' | 'incompletos' | 'prontos'
   const [busca, setBusca] = useState('');
@@ -278,35 +286,38 @@ export default function StagePage({ onNavigateHome }) {
   };
 
   const carregarStage = async (silencioso = false) => {
+    const sequencia = ++requisicaoStage.current;
     if (!silencioso) setLoading(true);
     try {
+      const query = new URLSearchParams({ pagina, tamanho: tamanhoPagina, status: filtroStatus, busca: buscaServidor,
+        ordem: ordenacao.coluna || '', direcao: ordenacao.direcao });
       const [resStage, resMeta] = await Promise.all([
-        fetch(getApiUrl('/api/stage')),
-        fetch(getApiUrl('/api/metadados'))
+        fetch(getApiUrl('/api/stage/pagina?' + query)),
+        metaCarregada.current ? Promise.resolve(null) : fetch(getApiUrl('/api/metadados'))
       ]);
-      if (resStage.ok) {
-        const dataStage = await resStage.json();
-        setItens(dataStage.itens || []);
-      }
-      if (resMeta.ok) {
+      if (!resStage.ok) throw new Error('Falha ao carregar Stage');
+      const dataStage = await resStage.json();
+      if (sequencia !== requisicaoStage.current) return;
+      setItens(dataStage.itens || []);
+      setResumoStage(dataStage);
+      if (dataStage.pagina !== pagina) setPagina(dataStage.pagina);
+      if (resMeta?.ok) {
         const dataMeta = await resMeta.json();
-        setMetadados({
-          tipos: dataMeta.tipos || [],
-          contas: dataMeta.contas || [],
-          locais: dataMeta.locais || []
-        });
+        setMetadados({ tipos: dataMeta.tipos || [], contas: dataMeta.contas || [], locais: dataMeta.locais || [] });
+        metaCarregada.current = true;
       }
     } catch (err) {
-      console.error(err);
-      showToast('Erro ao carregar dados do Stage.', 'error');
+      if (sequencia === requisicaoStage.current) showToast('Erro ao carregar dados do Stage.', 'error');
     } finally {
-      setLoading(false);
+      if (sequencia === requisicaoStage.current) setLoading(false);
     }
   };
 
   useEffect(() => {
-    carregarStage(false);
-  }, []);
+    const timer = setTimeout(() => { setPagina(0); setBuscaServidor(busca); }, 300);
+    return () => clearTimeout(timer);
+  }, [busca]);
+  useEffect(() => { carregarStage(false); }, [pagina, tamanhoPagina, filtroStatus, buscaServidor, ordenacao]);
 
   const salvarItemNoServidor = async (id, patchFields) => {
     setSavingStatus(prev => ({ ...prev, [id]: 'saving' }));
@@ -370,7 +381,7 @@ export default function StagePage({ onNavigateHome }) {
       if (res.ok) {
         const data = await res.json();
         if (data.stage && data.stage.itens) {
-          setItens(data.stage.itens);
+          await carregarStage(true);
         } else {
           carregarStage(true);
         }
@@ -385,7 +396,7 @@ export default function StagePage({ onNavigateHome }) {
     try {
       const res = await fetch(getApiUrl(`/api/stage/${id}`), { method: 'DELETE' });
       if (res.ok) {
-        setItens(prev => prev.filter(i => i.id !== id));
+        await carregarStage(true);
         showToast('Item removido do Stage.');
       }
     } catch (err) {
@@ -398,7 +409,7 @@ export default function StagePage({ onNavigateHome }) {
     try {
       const res = await fetch(getApiUrl('/api/stage'), { method: 'DELETE' });
       if (res.ok) {
-        setItens([]);
+        await carregarStage(true);
         showToast('Stage limpo com sucesso!');
       }
     } catch (err) {
@@ -471,7 +482,7 @@ export default function StagePage({ onNavigateHome }) {
       });
       if (res.ok) {
         const data = await res.json();
-        if (data.stage && data.stage.itens) setItens(data.stage.itens);
+        if (data.stage && data.stage.itens) await carregarStage(true);
         showToast(`Campo "${campo}" aplicado para ${selecionadosIds.length} item(ns)!`);
       }
     } catch (err) {
@@ -490,13 +501,25 @@ export default function StagePage({ onNavigateHome }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Erro ao importar JSON');
-      setItens(data.stage.itens || []);
+      await carregarStage(true);
       setModalJsonAberto(false);
       setJsonInput('');
       showToast(`${data.inseridos_count} item(ns) importado(s) para o Stage!`);
     } catch (err) {
       showToast(`JSON inválido ou erro: ${err.message}`, 'error');
     }
+  };
+
+  const importarPluggy = async () => {
+    setSyncingPluggy(true);
+    try {
+      const response = await fetch(getApiUrl('/api/pluggy/sync'), { method: 'POST' });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || 'Falha ao importar Pluggy');
+      await carregarStage(true);
+      showToast(`${data.inseridos_count} lançamento(s) importado(s) do Pluggy para revisão.`);
+    } catch (error) { showToast(error.message, 'error'); }
+    finally { setSyncingPluggy(false); }
   };
 
   const handleComitarStage = async (apenasCompletos = false) => {
@@ -541,7 +564,10 @@ export default function StagePage({ onNavigateHome }) {
       if (baixarCsvAutomatico) {
         const link = document.createElement('a');
         link.href = getApiUrl('/api/exportar');
-        link.download = `gastos_backup_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '_')}.csv`;
+        const agora = new Date();
+        const dataExportacao = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(agora);
+        const horaExportacao = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' }).format(agora).replace(/:/g, '-');
+        link.download = `gastos ${dataExportacao} ${horaExportacao}.csv`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -577,56 +603,19 @@ export default function StagePage({ onNavigateHome }) {
     const prontosSelecionados = selecionados.filter(i => i.completo);
     const valorSelecionado = prontosSelecionados.reduce((acc, i) => acc + (Number(i.valor) || 0), 0);
     return {
-      total,
-      prontos,
-      incompletos,
+      total: resumoStage.total,
+      prontos: resumoStage.prontos_para_commit,
+      incompletos: resumoStage.incompletos,
       valorTotal,
       selecionadosCount: selecionados.length,
       prontosSelecionadosCount: prontosSelecionados.length,
       valorSelecionado
     };
-  }, [itens]);
+  }, [itens, resumoStage]);
 
-  const itensFiltrados = useMemo(() => {
-    const termo = busca.trim().toLowerCase();
-    return itens.filter(item => {
-      if (filtroStatus === 'incompletos' && item.completo) return false;
-      if (filtroStatus === 'prontos' && !item.completo) return false;
-      if (termo) {
-        const texto = `${item.nome} ${item.texto_extrato} ${item.observacao_agente} ${item.tipo} ${item.conta} ${item.descricao} ${item.localizacao}`.toLowerCase();
-        if (!texto.includes(termo)) return false;
-      }
-      return true;
-    });
-  }, [itens, filtroStatus, busca]);
-
-  // Ordenação congelada: só é recalculada ao trocar de coluna/direção ou quando entram/saem itens,
-  // para a linha não "pular" de lugar enquanto o usuário edita a coluna ordenada.
-  const idsKey = itens.map(i => i.id).join(',');
-  const rankOrdenacao = useMemo(() => {
-    const col = COLUNAS.find(c => c.key === ordenacao.coluna);
-    if (!col) return null;
-    const vazio = v => v === null || v === undefined || v === '' || Number.isNaN(v);
-    const sinal = ordenacao.direcao === 'asc' ? 1 : -1;
-    const ordenados = [...itens].sort((a, b) => {
-      const va = col.sortValue(a);
-      const vb = col.sortValue(b);
-      if (vazio(va) || vazio(vb)) return vazio(va) - vazio(vb); // vazios sempre no fim
-      const cmp =
-        typeof va === 'number' && typeof vb === 'number'
-          ? va - vb
-          : String(va).localeCompare(String(vb), 'pt-BR', { numeric: true, sensitivity: 'base' });
-      return cmp * sinal;
-    });
-    return new Map(ordenados.map((item, idx) => [item.id, idx]));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ordenacao, idsKey]);
-
-  const itensVisiveis = useMemo(() => {
-    if (!rankOrdenacao) return itensFiltrados;
-    const rank = id => rankOrdenacao.get(id) ?? Number.MAX_SAFE_INTEGER;
-    return [...itensFiltrados].sort((a, b) => rank(a.id) - rank(b.id));
-  }, [itensFiltrados, rankOrdenacao]);
+  // Busca e ordenação são aplicadas no banco antes de limitar a página.
+  const itensFiltrados = itens;
+  const itensVisiveis = itens;
 
   // Clique no título: asc → desc → sem ordenação (ordem original do Stage).
   const alternarOrdenacao = coluna =>
@@ -643,9 +632,9 @@ export default function StagePage({ onNavigateHome }) {
   const valorFiltrado = itensFiltrados.reduce((acc, i) => acc + (Number(i.valor) || 0), 0);
 
   const filtros = [
-    { key: 'todos', label: 'Todos', count: estatisticas.total, color: '#38BDF8' },
+    { key: 'todos', label: 'Todos', count: estatisticas.total, color: '#5B9BD5' },
     { key: 'incompletos', label: 'Pendentes', count: estatisticas.incompletos, color: '#F59E0B' },
-    { key: 'prontos', label: 'Prontos', count: estatisticas.prontos, color: '#10B981' }
+    { key: 'prontos', label: 'Prontos', count: estatisticas.prontos, color: '#3A9C74' }
   ];
 
   const stickySx = col =>
@@ -711,8 +700,7 @@ export default function StagePage({ onNavigateHome }) {
           pt: { xs: 1.5, sm: 2 },
           pb: 1.5,
           borderBottom: GRID.border,
-          bgcolor: 'rgba(9, 13, 22, 0.92)',
-          backdropFilter: 'blur(16px)',
+          bgcolor: 'rgba(13, 16, 20, 0.92)',
           zIndex: 5
         }}
       >
@@ -731,7 +719,7 @@ export default function StagePage({ onNavigateHome }) {
             <Tooltip title="Painel Principal">
               <IconButton
                 onClick={onNavigateHome}
-                sx={{ border: '1px solid rgba(148, 163, 184, 0.3)', color: '#E2E8F0', borderRadius: 2.5 }}
+                sx={{ border: '1px solid rgba(148, 163, 184, 0.3)', color: '#E2E8F0', borderRadius: 1.5 }}
               >
                 <ArrowBackIcon fontSize="small" />
               </IconButton>
@@ -766,7 +754,7 @@ export default function StagePage({ onNavigateHome }) {
               size="small"
               startIcon={<CodeIcon />}
               onClick={() => setMostrarDocMcp(prev => !prev)}
-              sx={{ borderColor: 'rgba(56, 189, 248, 0.4)', color: '#38BDF8' }}
+              sx={{ borderColor: 'rgba(91, 155, 213, 0.4)', color: '#5B9BD5' }}
             >
               <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Como o Agente Envia</Box>
             </Button>
@@ -784,7 +772,7 @@ export default function StagePage({ onNavigateHome }) {
               size="small"
               startIcon={<AddIcon />}
               onClick={handleAdicionarLinhaManual}
-              sx={{ borderColor: 'rgba(16, 185, 129, 0.4)', color: '#10B981' }}
+              sx={{ borderColor: 'rgba(58, 156, 116, 0.4)', color: '#3A9C74' }}
             >
               <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Nova Linha</Box>
             </Button>
@@ -793,9 +781,12 @@ export default function StagePage({ onNavigateHome }) {
               size="small"
               startIcon={<TuneIcon />}
               onClick={() => setMostrarLoteMobile(prev => !prev)}
-              sx={{ display: { xs: 'inline-flex', sm: 'none' }, borderColor: 'rgba(148, 163, 184, 0.3)', color: mostrarLoteMobile ? '#10B981' : '#94A3B8' }}
+              sx={{ display: { xs: 'inline-flex', sm: 'none' }, borderColor: 'rgba(148, 163, 184, 0.3)', color: mostrarLoteMobile ? '#3A9C74' : '#94A3B8' }}
             >
               Lote
+            </Button>
+            <Button variant="outlined" size="small" disabled={syncingPluggy} onClick={importarPluggy}>
+              {syncingPluggy ? 'Importando…' : 'Importar Pluggy'}
             </Button>
             <Button
               variant="outlined"
@@ -816,7 +807,7 @@ export default function StagePage({ onNavigateHome }) {
             sx={{
               display: 'flex',
               border: '1px solid rgba(148, 163, 184, 0.22)',
-              borderRadius: 2.5,
+              borderRadius: 1.5,
               overflow: 'hidden',
               flexShrink: 0
             }}
@@ -829,7 +820,7 @@ export default function StagePage({ onNavigateHome }) {
                   component="button"
                   role="tab"
                   aria-selected={ativo}
-                  onClick={() => setFiltroStatus(f.key)}
+                  onClick={() => { setPagina(0); setFiltroStatus(f.key); }}
                   sx={{
                     all: 'unset',
                     cursor: 'pointer',
@@ -931,7 +922,7 @@ export default function StagePage({ onNavigateHome }) {
                 startIcon={<CheckCircleIcon />}
                 disabled={itensFiltrados.every(i => !i.completo)}
                 onClick={handleSelecionarProntos}
-                sx={{ color: '#10B981' }}
+                sx={{ color: '#3A9C74' }}
               >
                 Só prontos
               </Button>
@@ -979,9 +970,9 @@ export default function StagePage({ onNavigateHome }) {
 
         {/* Instruções para o Agente MCP (Colapsável) */}
         <Collapse in={mostrarDocMcp}>
-          <Card sx={{ mt: 1.5, border: '1px solid rgba(56, 189, 248, 0.35)', bgcolor: 'rgba(15, 23, 42, 0.9)', maxHeight: '40vh', overflow: 'auto' }}>
+          <Card sx={{ mt: 1.5, border: '1px solid rgba(91, 155, 213, 0.35)', bgcolor: 'rgba(15, 23, 42, 0.9)', maxHeight: '40vh', overflow: 'auto' }}>
             <CardContent>
-              <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#38BDF8', mb: 1 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#5B9BD5', mb: 1 }}>
                 🤖 Como o Agente em Outros Computadores se Comunica com este Stage (HTTP / HTTPS / MCP)
               </Typography>
               <Grid container spacing={2}>
@@ -1001,8 +992,8 @@ export default function StagePage({ onNavigateHome }) {
                     sx={{
                       m: 0,
                       p: 1.5,
-                      borderRadius: 2,
-                      bgcolor: '#090D16',
+                      borderRadius: 1,
+                      bgcolor: '#0D1014',
                       border: '1px solid rgba(148, 163, 184, 0.2)',
                       color: '#E2E8F0',
                       fontSize: '0.75rem',
@@ -1091,7 +1082,7 @@ Content-Type: application/json
                 },
                 '& th': { px: 1 },
                 '& td[data-cell]': { outline: 'none', cursor: 'cell' },
-                '& td[data-cell]:focus': { boxShadow: `${GRID.focusRing} !important`, bgcolor: 'rgba(16, 185, 129, 0.08)' },
+                '& td[data-cell]:focus': { boxShadow: `${GRID.focusRing} !important`, bgcolor: 'rgba(58, 156, 116, 0.08)' },
                 '& th:first-of-type': { px: 0 }
               }}
             >
@@ -1137,8 +1128,8 @@ Content-Type: application/json
                           sx={{
                             maxWidth: '100%',
                             flexDirection: col.align === 'right' ? 'row-reverse' : 'row',
-                            '&.Mui-active': { color: '#10B981' },
-                            '&.Mui-active .MuiTableSortLabel-icon': { color: '#10B981 !important' }
+                            '&.Mui-active': { color: '#3A9C74' },
+                            '&.Mui-active .MuiTableSortLabel-icon': { color: '#3A9C74 !important' }
                           }}
                         >
                           <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -1150,7 +1141,7 @@ Content-Type: application/json
                           <Box
                             component="button"
                             onClick={() => setOrdenacao({ coluna: null, direcao: 'asc' })}
-                            sx={{ all: 'unset', cursor: 'pointer', color: ordenacao.coluna ? '#10B981' : 'inherit' }}
+                            sx={{ all: 'unset', cursor: 'pointer', color: ordenacao.coluna ? '#3A9C74' : 'inherit' }}
                           >
                             #
                           </Box>
@@ -1200,7 +1191,7 @@ Content-Type: application/json
                           fontSize: '0.72rem !important',
                           fontWeight: 600,
                           fontVariantNumeric: 'tabular-nums',
-                          borderLeft: `3px solid ${item.completo ? '#10B981' : '#F59E0B'}`
+                          borderLeft: `3px solid ${item.completo ? '#3A9C74' : '#F59E0B'}`
                         }}
                       >
                         <Tooltip
@@ -1283,8 +1274,8 @@ Content-Type: application/json
                                     ml: 0.5,
                                     fontSize: '0.65rem',
                                     fontWeight: 700,
-                                    bgcolor: 'rgba(56, 189, 248, 0.15)',
-                                    color: '#38BDF8'
+                                    bgcolor: 'rgba(91, 155, 213, 0.15)',
+                                    color: '#5B9BD5'
                                   }}
                                 />
                               ) : null
@@ -1442,6 +1433,12 @@ Content-Type: application/json
           </TableContainer>
         )}
 
+        <TablePagination component="div" count={resumoStage.total_filtrado} page={pagina}
+          rowsPerPage={tamanhoPagina} rowsPerPageOptions={[25, 50, 100]}
+          onPageChange={(_, nova) => setPagina(nova)}
+          onRowsPerPageChange={event => { setTamanhoPagina(Number(event.target.value)); setPagina(0); }}
+          labelRowsPerPage="Linhas por página" labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count}`}
+          getItemAriaLabel={type => type === 'next' ? 'Próxima página' : 'Página anterior'} />
         {/* Barra de status (rodapé fixo da planilha) */}
         <Box
           component="footer"
@@ -1469,10 +1466,10 @@ Content-Type: application/json
             Soma: <strong>R$ {formatarMoeda(valorFiltrado)}</strong>
           </span>
           <span>
-            Selecionados: <strong>{estatisticas.selecionadosCount}</strong>
+            Selecionados nesta página: <strong>{estatisticas.selecionadosCount}</strong>
           </span>
           <span>
-            Prontos selecionados: <strong style={{ color: '#10B981' }}>R$ {formatarMoeda(estatisticas.valorSelecionado)}</strong>
+            Prontos selecionados: <strong style={{ color: '#3A9C74' }}>R$ {formatarMoeda(estatisticas.valorSelecionado)}</strong>
           </span>
           <Box component="span" sx={{ ml: 'auto', display: { xs: 'none', md: 'inline' }, color: '#64748B' }}>
             Setas navegam · Enter/F2 ou digitar edita · Esc sai da edição · Espaço marca · Clique no título ordena

@@ -576,7 +576,10 @@ app.get('/api/exportar', async (req, res) => {
   try {
     const csvContent = await gerarCsvString();
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', 'attachment; filename="gastos.csv"');
+    const agora = new Date();
+    const dataExportacao = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(agora);
+    const horaExportacao = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' }).format(agora).replace(/:/g, '-');
+    res.setHeader('Content-Disposition', `attachment; filename="gastos ${dataExportacao} ${horaExportacao}.csv"`);
     res.send(csvContent);
   } catch (err) {
     console.error(err);
@@ -805,6 +808,59 @@ async function comitarItensStage(opcoes = {}) {
     gastos_criados_ids: gastosCriadosIds
   };
 }
+
+// O registro persistente impede reimportações mesmo depois da baixa ou descarte.
+app.post('/api/pluggy/sync', async (req, res) => {
+  let client;
+  try {
+    const items = await require('./pluggy').transactions();
+    client = await pool.connect();
+    await client.query('BEGIN');
+    let inserted = 0;
+    for (const item of items) {
+      const registered = await client.query('INSERT INTO pluggy_importacoes (transaction_id) VALUES ($1) ON CONFLICT DO NOTHING RETURNING transaction_id', [item.id]);
+      if (!registered.rowCount) continue;
+      await client.query(`INSERT INTO gastos_stage (nome, valor, data, conta, tipo, texto_extrato, observacao_agente, selecionado)
+        VALUES ($1, $2, $3, $4, '', $5, $6, false)`,
+        [item.nome, item.valor, item.data, item.conta, item.texto_extrato, item.observacao_agente]);
+      inserted++;
+    }
+    await client.query('COMMIT');
+    res.json({ inseridos_count: inserted, ignorados_count: items.length - inserted });
+  } catch (err) {
+    if (client) await client.query('ROLLBACK');
+    res.status(502).json({ detail: err.message });
+  } finally { if (client) client.release(); }
+});
+
+app.get('/api/stage/pagina', async (req, res) => {
+  try {
+    const tamanho = Math.min(100, Math.max(1, parseInt(req.query.tamanho, 10) || 25));
+    const paginaPedida = Math.max(0, parseInt(req.query.pagina, 10) || 0);
+    const completo = `(trim(coalesce(nome,'')) <> '' AND valor > 0 AND trim(coalesce(tipo,'')) <> '' AND trim(coalesce(conta,'')) <> '' AND trim(coalesce(data,'')) <> '')`;
+    const params = [];
+    const filtros = [];
+    if (req.query.status === 'prontos') filtros.push(`coalesce(${completo}, false)`);
+    if (req.query.status === 'incompletos') filtros.push(`NOT coalesce(${completo}, false)`);
+    if (req.query.busca) {
+      params.push('%' + String(req.query.busca).trim().replace(/[\\%_]/g, '\\$&') + '%');
+      filtros.push(`concat_ws(' ', nome, texto_extrato, observacao_agente, tipo, conta, descricao, localizacao) ILIKE $${params.length}`);
+    }
+    const where = filtros.length ? 'WHERE ' + filtros.join(' AND ') : '';
+    const globais = await pool.query(`SELECT count(*)::int total, count(*) FILTER (WHERE ${completo})::int prontos, coalesce(sum(valor),0) valor_total FROM gastos_stage`);
+    const contagem = await pool.query(`SELECT count(*)::int total FROM gastos_stage ${where}`, params);
+    const totalFiltrado = contagem.rows[0].total;
+    const pagina = Math.min(paginaPedida, Math.max(0, Math.ceil(totalFiltrado / tamanho) - 1));
+    const colunas = ['nome','valor','tipo','conta','data','descricao','localizacao','fixo','observacao_agente','texto_extrato'];
+    const ordem = ({ extrato: 'texto_extrato', observacao: 'observacao_agente' })[req.query.ordem] || req.query.ordem;
+    const coluna = colunas.includes(ordem) ? ordem : 'data';
+    const direcao = req.query.ordem ? (req.query.direcao === 'desc' ? 'DESC' : 'ASC') : 'DESC';
+    const result = await pool.query(`SELECT * FROM gastos_stage ${where} ORDER BY ${coluna} ${direcao} NULLS LAST, id ASC LIMIT $${params.length+1} OFFSET $${params.length+2}`, [...params, tamanho, pagina*tamanho]);
+    const global = globais.rows[0];
+    res.json({ total: global.total, prontos_para_commit: global.prontos, incompletos: global.total-global.prontos,
+      valor_total: Number(global.valor_total), total_filtrado: totalFiltrado, pagina, tamanho, itens: result.rows.map(formatarItemStage) });
+  } catch (err) { console.error(err); res.status(500).json({ detail: 'Erro ao carregar página do Stage.' }); }
+});
 
 app.get(['/api/stage', '/mcp/stage'], async (req, res) => {
   try {
@@ -1054,7 +1110,24 @@ app.get(['/api/tudo', '/mcp/tudo'], async (req, res) => {
 
 // ==================== MCP SERVER OVER HTTP (STREAMABLE-HTTP, SSE & REST) ====================
 
+app.post('/api/dividas', async (req, res) => {
+  const { nome, valor } = req.body;
+  if (typeof nome !== 'string' || !nome.trim() || nome.length > 200 || !Number.isFinite(valor) || valor <= 0 || valor > 999999999999.99) return res.status(400).json({detail:'Informe nome e valor positivo para a dívida.'});
+  try { const { rows } = await pool.query('INSERT INTO dividas_financeiras(nome,valor) VALUES($1,$2) RETURNING *',[nome.trim(),valor]); res.status(201).json(rows[0]); }
+  catch(e) { res.status(500).json({detail:'Não foi possível salvar a dívida.'}); }
+});
+app.delete('/api/dividas/:id', async (req,res) => {
+  if (!/^\d+$/.test(req.params.id)) return res.status(400).json({detail:'ID inválido.'});
+  try { const result = await pool.query('DELETE FROM dividas_financeiras WHERE id=$1',[req.params.id]); res.status(result.rowCount ? 200 : 404).json({status:result.rowCount ? 'success' : 'not_found'}); }
+  catch(e) { res.status(500).json({detail:'Não foi possível remover a dívida.'}); }
+});
+app.get('/api/planejamento', async (req, res) => {
+  try { res.json(await require('./plans').context()); }
+  catch (e) { res.status(500).json({ detail: e.message }); }
+});
 const MCP_TOOLS = [
+  { name: 'obter_planejamento', description: 'Consulta saldo bancário BRL do Pluggy e análises financeiras registradas. Use com obter_tudo para analisar entradas e despesas antes de elaborar projeções. Investimentos com saldo zerado são omitidos e não devem ser listados ao usuário.', inputSchema: { type: 'object', properties: {} } },
+  { name: 'registrar_previsao_financeira', description: 'Registra uma análise elaborada pelo agente MCP. Consulte obter_planejamento e os gastos antes. Explicite premissas, entradas líquidas, despesas, rendimentos e incertezas. Saldo inicial vem exclusivamente do Pluggy. Não invente receitas ou rendimentos. Cada chamada cria uma versão; não soma nem reserva saldos entre metas.', inputSchema: { type: 'object', required: ['nome','valor_meta','data_meta','analise','premissas','projecao'], properties: { base_calculo: {type:'string',enum:['conta','patrimonio_liquido']}, nome: {type:'string'}, valor_meta:{type:'number'}, data_meta:{type:'string'}, analise:{type:'string'}, premissas:{type:'string'}, projecao:{type:'array',items:{type:'object',required:['mes','entradas','saidas','rendimentos','saldo'],properties:{mes:{type:'string'},entradas:{type:'number'},saidas:{type:'number'},rendimentos:{type:'number'},saldo:{type:'number'}}}} } } },
   {
     name: 'fazer_backup_csv',
     description: 'DIRETRIZ OBRIGATÓRIA: Sempre execute esta ferramenta ANTES de iniciar qualquer lote de modificação (adição, atualização ou exclusão de gastos, categorias ou contas). Gera e retorna/salva o backup CSV completo dos gastos.',
@@ -1268,6 +1341,8 @@ const MCP_TOOLS = [
 
 async function executarFerramentaMcp(name, args = {}) {
   switch (name) {
+    case 'obter_planejamento': return JSON.stringify(await require('./plans').context());
+    case 'registrar_previsao_financeira': return JSON.stringify(await require('./plans').save(args));
     case 'fazer_backup_csv': {
       await salvarSnapshotPreModificacao('mcp_backup');
       const csv = await gerarCsvString();
@@ -1684,7 +1759,8 @@ function gerarManifestoMcp(req) {
       '1. BACKUP CSV OBRIGATÓRIO: Antes de qualquer adição, edição ou exclusão, baixe o backup CSV em GET /api/exportar (ou ferramenta MCP fazer_backup_csv) e salve na pasta ~/Downloads do dispositivo cliente.',
       '2. VERIFIQUE METADADOS PRIMEIRO: Consulte GET /api/metadados (ou GET /api/tudo ou ferramenta obter_metadados) antes de inserir gastos.',
       '3. REUTILIZE PADRÕES: Use exatamente os mesmos nomes de categorias (tipo) e contas já cadastrados.',
-      '4. NÃO CRIE CATEGORIA/CONTA SEM PERMISSÃO: Se não houver categoria ou conta adequada, pergunte ao usuário antes de criar.'
+      '4. NÃO CRIE CATEGORIA/CONTA SEM PERMISSÃO: Se não houver categoria ou conta adequada, pergunte ao usuário antes de criar.',
+      '5. NÃO EXIBA INVESTIMENTOS ZERADOS: Ao consultar o planejamento, não liste investimentos com saldo R$ 0,00. A API já os omite da lista de ativos.'
     ],
     como_dar_get_em_tudo_porta_8080: {
       tudo_consolidado: `GET ${baseUrl}/api/tudo`,

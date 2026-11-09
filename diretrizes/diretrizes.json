@@ -1,6 +1,6 @@
 {
   "sistema": "Controle de Finanças",
-  "versao_diretrizes": "1.2.0",
+  "versao_diretrizes": "1.3.0",
   "rede": {
     "ip_lan": "192.168.15.15",
     "ip_tailscale": "<IP_TAILSCALE>",
@@ -49,6 +49,11 @@
       "id": "NAO_CRIAR_CATEGORIA_OU_CONTA_SEM_PERMISSAO",
       "prioridade": "ALTA",
       "descricao": "Se o gasto não se encaixar em nenhuma categoria ou conta existente, pause e pergunte expressamente ao usuário antes de criar."
+    },
+    {
+      "id": "NAO_EXIBIR_INVESTIMENTOS_ZERADOS",
+      "prioridade": "MEDIA",
+      "descricao": "Ao consultar o planejamento (obter_planejamento ou GET /api/planejamento), não liste investimentos com saldo R$ 0,00 em respostas, análises ou previsões. A API já os omite da lista de ativos."
     }
   ],
   "ferramentas_mcp": [

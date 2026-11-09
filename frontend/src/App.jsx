@@ -92,6 +92,8 @@ import RepeatIcon from '@mui/icons-material/Repeat';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 // Helper inteligente de API: usa proxy /api em produção (porta 8080/HTTPS) ou porta 8000 no dev Vite (5173)
+const categoriasPadrao = tipos => (tipos || []).filter(tipo => !['investimentos', 'pagamento fatura', 'pagamento de fatura'].includes(tipo.toLowerCase().trim()));
+
 const getApiUrl = (path) => {
   if (window.location.port === '5173') {
     return `http://${window.location.hostname}:8000${path}`;
@@ -110,7 +112,7 @@ const getGoogleMapsEmbedUrl = (localizacao) => {
 };
 
 const NEON_COLORS = [
-  '#10B981', '#38BDF8', '#A855F7', '#F59E0B', '#F43F5E',
+  '#3A9C74', '#5B9BD5', '#A855F7', '#F59E0B', '#F43F5E',
   '#14B8A6', '#6366F1', '#EC4899', '#84CC16', '#06B6D4',
   '#F97316', '#8B5CF6', '#22C55E', '#EAB308', '#3B82F6'
 ];
@@ -153,7 +155,7 @@ const FilterBadge = ({ label, isSelected, cores, onClick, onDelete }) => {
         gap: 0.75,
         px: 1.4,
         py: 0.55,
-        borderRadius: '14px',
+        borderRadius: '6px',
         cursor: 'pointer',
         userSelect: 'none',
         fontSize: '0.78rem',
@@ -163,11 +165,10 @@ const FilterBadge = ({ label, isSelected, cores, onClick, onDelete }) => {
         bgcolor: isSelected ? cores.bg : 'rgba(15, 23, 42, 0.6)',
         color: isSelected ? cores.text : '#64748B',
         border: isSelected ? `1.5px solid ${cores.main}` : '1px solid rgba(148, 163, 184, 0.16)',
-        boxShadow: isSelected ? `0 0 12px ${cores.bg}` : 'none',
+        boxShadow: 'none',
         '&:hover': {
           bgcolor: isSelected ? cores.bg : 'rgba(30, 41, 59, 0.8)',
           borderColor: isSelected ? cores.main : 'rgba(148, 163, 184, 0.35)',
-          transform: 'translateY(-1px)'
         }
       }}
     >
@@ -177,7 +178,7 @@ const FilterBadge = ({ label, isSelected, cores, onClick, onDelete }) => {
           height: 7,
           borderRadius: '50%',
           bgcolor: isSelected ? cores.main : '#475569',
-          boxShadow: isSelected ? `0 0 6px ${cores.main}` : 'none',
+          boxShadow: 'none',
           flexShrink: 0
         }}
       />
@@ -209,28 +210,27 @@ const CustomChartTooltip = ({ active, payload, label }) => {
     const dataObj = item.payload || {};
     const title = dataObj.fullName || dataObj.name || label || item.name || 'Item';
     const val = dataObj.rawValor !== undefined ? dataObj.rawValor : (item.value || 0);
-    const color = item.color || dataObj.fill || '#10B981';
+    const color = item.color || dataObj.fill || '#3A9C74';
 
     return (
       <Paper
         elevation={12}
         sx={{
           bgcolor: 'rgba(15, 23, 42, 0.96)',
-          backdropFilter: 'blur(12px)',
           p: 1.5,
           border: `1.5px solid ${color}`,
-          borderRadius: 2.5,
+          borderRadius: 1.5,
           minWidth: 190,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.6)'
+          boxShadow: '0 4px 12px rgba(0,0,0,0.4)'
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-          <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: color, boxShadow: `0 0 8px ${color}` }} />
+          <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: color }} />
           <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#F8FAFC' }}>
             {title}
           </Typography>
         </Box>
-        <Typography variant="body2" sx={{ color: '#10B981', fontWeight: 800, fontSize: '0.95rem' }}>
+        <Typography variant="body2" sx={{ color: '#3A9C74', fontWeight: 800, fontSize: '0.95rem' }}>
           R$ {formatarMoeda(val)}
         </Typography>
         {dataObj.count !== undefined && (
@@ -239,7 +239,7 @@ const CustomChartTooltip = ({ active, payload, label }) => {
           </Typography>
         )}
         {dataObj.score !== undefined && (
-          <Typography variant="caption" sx={{ color: '#38BDF8', fontWeight: 700, display: 'block', mt: 0.25 }}>
+          <Typography variant="caption" sx={{ color: '#5B9BD5', fontWeight: 700, display: 'block', mt: 0.25 }}>
             Índice de Dominância: {dataObj.score}/99
           </Typography>
         )}
@@ -520,8 +520,8 @@ function CadastroGastoForm({ metadados, onSuccess, onCancel, gastoParaEditar }) 
           disabled={gettingGps}
           title="Usar minha localização GPS atual"
           sx={{
-            border: '1px solid rgba(16, 185, 129, 0.35)',
-            borderRadius: 2,
+            border: '1px solid rgba(58, 156, 116, 0.35)',
+            borderRadius: 1,
             p: 1
           }}
         >
@@ -535,9 +535,9 @@ function CadastroGastoForm({ metadados, onSuccess, onCancel, gastoParaEditar }) 
             rel="noopener noreferrer"
             title="Testar no Google Maps"
             sx={{
-              border: '1px solid rgba(56, 189, 248, 0.35)',
-              color: '#38BDF8',
-              borderRadius: 2,
+              border: '1px solid rgba(91, 155, 213, 0.35)',
+              color: '#5B9BD5',
+              borderRadius: 1,
               p: 1
             }}
           >
@@ -652,7 +652,7 @@ function CadastroGastoForm({ metadados, onSuccess, onCancel, gastoParaEditar }) 
                 color="secondary"
               />
             }
-            label={<Typography variant="caption" sx={{ color: '#38BDF8' }}>Aplicar valor/categoria/local a todas as parcelas</Typography>}
+            label={<Typography variant="caption" sx={{ color: '#5B9BD5' }}>Aplicar valor/categoria/local a todas as parcelas</Typography>}
           />
         )}
       </Box>
@@ -847,7 +847,7 @@ function GerenciarCategoriasDialog({ open, onClose, onUpdated, showToast }) {
                             <Chip
                               size="small"
                               label={`Meta: R$ ${formatarMoeda(cat.orcamento_mensal)}`}
-                              sx={{ height: 20, fontSize: '0.68rem', bgcolor: 'rgba(16, 185, 129, 0.15)', color: '#34D399' }}
+                              sx={{ height: 20, fontSize: '0.68rem', bgcolor: 'rgba(58, 156, 116, 0.15)', color: '#5BB591' }}
                             />
                           )}
                         </Box>
@@ -1051,7 +1051,7 @@ function GerenciarContasDialog({ open, onClose, onUpdated, showToast }) {
   );
 }
 
-export default function App({ onNavigateStage }) {
+export default function App({ onNavigateStage, onNavigatePlanning }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -1066,13 +1066,18 @@ export default function App({ onNavigateStage }) {
 
   // Busca + Filtros de Período
   const [termoBusca, setTermoBusca] = useState('');
-  const [filtroDataDe, setFiltroDataDe] = useState('');
-  const [filtroDataAte, setFiltroDataAte] = useState('');
-  const [periodoPreset, setPeriodoPreset] = useState('todos'); // 'todos', 'este_mes', 'mes_passado', '30d', 'ano', 'custom'
   const [mesNavegacao, setMesNavegacao] = useState(() => {
     const d = new Date();
     return { ano: d.getFullYear(), mes: d.getMonth() }; // mes 0-11
   });
+  const [filtroDataDe, setFiltroDataDe] = useState(() =>
+    `${mesNavegacao.ano}-${String(mesNavegacao.mes + 1).padStart(2, '0')}-01`
+  );
+  const [filtroDataAte, setFiltroDataAte] = useState(() => {
+    const ultimoDia = new Date(mesNavegacao.ano, mesNavegacao.mes + 1, 0).getDate();
+    return `${mesNavegacao.ano}-${String(mesNavegacao.mes + 1).padStart(2, '0')}-${String(ultimoDia).padStart(2, '0')}`;
+  });
+  const [periodoPreset, setPeriodoPreset] = useState('este_mes'); // 'todos', 'este_mes', 'mes_passado', '30d', 'ano', 'custom'
   const [filtrosAvancadosAbertos, setFiltrosAvancadosAbertos] = useState(false);
 
   // Filtros Interativos por Labels
@@ -1176,8 +1181,8 @@ export default function App({ onNavigateStage }) {
         orcamentos: dataMeta.orcamentos || {}
       });
 
-      if (isInitial || selectedTipos.length === 0) {
-        setSelectedTipos(dataMeta.tipos || []);
+      if (isInitial) {
+        setSelectedTipos(categoriasPadrao(dataMeta.tipos));
       }
       if (isInitial || selectedContas.length === 0) {
         setSelectedContas(dataMeta.contas || []);
@@ -1209,7 +1214,7 @@ export default function App({ onNavigateStage }) {
     setPeriodoPreset('todos');
     setFiltroDataDe('');
     setFiltroDataAte('');
-    setSelectedTipos(metadados.tipos || []);
+    setSelectedTipos(categoriasPadrao(metadados.tipos));
     setSelectedContas(metadados.contas || []);
   };
 
@@ -1533,20 +1538,19 @@ export default function App({ onNavigateStage }) {
               sx={{
                 width: 40,
                 height: 40,
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(56, 189, 248, 0.15) 100%)',
-                border: '1px solid rgba(16, 185, 129, 0.4)',
+                borderRadius: '6px',
+                bgcolor: 'rgba(58, 156, 116, 0.12)',
+                border: '1px solid rgba(58, 156, 116, 0.4)',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 0 20px rgba(16, 185, 129, 0.2)'
+                justifyContent: 'center'
               }}
             >
-              <TrendingUpIcon sx={{ color: '#10B981', fontSize: 24 }} />
+              <TrendingUpIcon sx={{ color: '#3A9C74', fontSize: 24 }} />
             </Box>
             <Box>
               <Typography variant={isMobile ? 'h6' : 'h5'} component="h1" sx={{ fontWeight: 800, color: '#F8FAFC', lineHeight: 1.15 }}>
-                Finanças <span style={{ color: '#10B981' }}>Pro</span>
+                Finanças <span style={{ color: '#3A9C74' }}>Pro</span>
               </Typography>
               <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
                 Analytics • Radar • Google Maps
@@ -1561,7 +1565,7 @@ export default function App({ onNavigateStage }) {
                 disabled={refreshing || loading}
                 color="primary"
                 size="small"
-                sx={{ border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: 2 }}
+                sx={{ border: '1px solid rgba(58, 156, 116, 0.3)', borderRadius: 1 }}
               >
                 <SyncIcon fontSize="small" className={refreshing ? 'spin-anim' : ''} />
               </IconButton>
@@ -1570,7 +1574,7 @@ export default function App({ onNavigateStage }) {
                 color="secondary"
                 size="small"
                 title="Exportar Backup CSV"
-                sx={{ border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: 2 }}
+                sx={{ border: '1px solid rgba(91, 155, 213, 0.3)', borderRadius: 1 }}
               >
                 <DownloadIcon fontSize="small" />
               </IconButton>
@@ -1580,6 +1584,16 @@ export default function App({ onNavigateStage }) {
 
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
           <Button
+            variant="outlined"
+            color="primary"
+            size="small"
+            startIcon={<TrendingUpIcon />}
+            onClick={() => (onNavigatePlanning ? onNavigatePlanning() : (window.location.href = '/planejamento'))}
+            sx={{ flexGrow: { xs: 1, sm: 0 }, borderColor: 'rgba(58, 156, 116, 0.35)' }}
+          >
+            Meu futuro financeiro
+          </Button>
+          <Button
             variant={stageCount > 0 ? 'contained' : 'outlined'}
             color="warning"
             size="small"
@@ -1588,7 +1602,7 @@ export default function App({ onNavigateStage }) {
               flexGrow: { xs: 1, sm: 0 },
               fontWeight: 700,
               borderColor: 'rgba(245, 158, 11, 0.5)',
-              color: stageCount > 0 ? '#090D16' : '#FBBF24',
+              color: stageCount > 0 ? '#0D1014' : '#FBBF24',
               bgcolor: stageCount > 0 ? '#F59E0B' : 'rgba(245, 158, 11, 0.08)',
               '&:hover': {
                 bgcolor: stageCount > 0 ? '#D97706' : 'rgba(245, 158, 11, 0.18)'
@@ -1603,7 +1617,7 @@ export default function App({ onNavigateStage }) {
             size="small"
             startIcon={<CategoryIcon />}
             onClick={() => setModalCategoriasAberto(true)}
-            sx={{ flexGrow: { xs: 1, sm: 0 }, borderColor: 'rgba(16, 185, 129, 0.35)' }}
+            sx={{ flexGrow: { xs: 1, sm: 0 }, borderColor: 'rgba(58, 156, 116, 0.35)' }}
           >
             Categorias & Metas
           </Button>
@@ -1613,7 +1627,7 @@ export default function App({ onNavigateStage }) {
             size="small"
             startIcon={<CreditCardIcon />}
             onClick={() => setModalContasAberto(true)}
-            sx={{ flexGrow: { xs: 1, sm: 0 }, borderColor: 'rgba(56, 189, 248, 0.35)' }}
+            sx={{ flexGrow: { xs: 1, sm: 0 }, borderColor: 'rgba(91, 155, 213, 0.35)' }}
           >
             Métodos
           </Button>
@@ -1624,7 +1638,7 @@ export default function App({ onNavigateStage }) {
                 disabled={refreshing || loading}
                 color="primary"
                 size="small"
-                sx={{ border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: 2.5, px: 1 }}
+                sx={{ border: '1px solid rgba(58, 156, 116, 0.3)', borderRadius: 1.5, px: 1 }}
               >
                 <SyncIcon className={refreshing ? 'spin-anim' : ''} />
               </IconButton>
@@ -1647,8 +1661,7 @@ export default function App({ onNavigateStage }) {
         sx={{
           mb: 2.5,
           p: { xs: 1.5, sm: 2 },
-          background: 'linear-gradient(180deg, rgba(17, 24, 39, 0.92) 0%, rgba(15, 23, 42, 0.85) 100%)',
-          border: '1px solid rgba(16, 185, 129, 0.2)'
+          border: '1px solid rgba(148, 163, 184, 0.14)'
         }}
       >
         <Grid container spacing={1.5} alignItems="center">
@@ -1664,7 +1677,7 @@ export default function App({ onNavigateStage }) {
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">
-                      <SearchIcon sx={{ color: '#10B981', fontSize: 20 }} />
+                      <SearchIcon sx={{ color: '#3A9C74', fontSize: 20 }} />
                     </InputAdornment>
                   ),
                   endAdornment: termoBusca ? (
@@ -1686,9 +1699,9 @@ export default function App({ onNavigateStage }) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                bgcolor: 'rgba(9, 13, 22, 0.7)',
+                bgcolor: 'rgba(13, 16, 20, 0.7)',
                 border: '1px solid rgba(148, 163, 184, 0.2)',
-                borderRadius: 2.5,
+                borderRadius: 1.5,
                 px: 0.75,
                 py: 0.35
               }}
@@ -1725,9 +1738,9 @@ export default function App({ onNavigateStage }) {
                   sx={{
                     fontWeight: 700,
                     fontSize: '0.73rem',
-                    bgcolor: periodoPreset === p.id ? 'rgba(16, 185, 129, 0.22)' : 'rgba(15, 23, 42, 0.7)',
-                    color: periodoPreset === p.id ? '#34D399' : '#94A3B8',
-                    border: periodoPreset === p.id ? '1px solid #10B981' : '1px solid rgba(148,163,184,0.18)'
+                    bgcolor: periodoPreset === p.id ? 'rgba(58, 156, 116, 0.22)' : 'rgba(15, 23, 42, 0.7)',
+                    color: periodoPreset === p.id ? '#5BB591' : '#94A3B8',
+                    border: periodoPreset === p.id ? '1px solid #3A9C74' : '1px solid rgba(148,163,184,0.18)'
                   }}
                 />
               ))}
@@ -1740,7 +1753,7 @@ export default function App({ onNavigateStage }) {
           <Button
             size="small"
             color="inherit"
-            startIcon={<FilterAltIcon fontSize="small" sx={{ color: '#38BDF8' }} />}
+            startIcon={<FilterAltIcon fontSize="small" sx={{ color: '#5B9BD5' }} />}
             endIcon={filtrosAvancadosAbertos ? <ExpandLessIcon /> : <ExpandMoreIcon />}
             onClick={() => setFiltrosAvancadosAbertos(!filtrosAvancadosAbertos)}
             sx={{ fontSize: '0.78rem', color: '#94A3B8', py: 0.25 }}
@@ -1863,14 +1876,13 @@ export default function App({ onNavigateStage }) {
             <Grid size={{ xs: 12, sm: 4 }}>
               <Card
                 sx={{
-                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(6, 78, 59, 0.35) 100%)',
-                  border: '1px solid rgba(16, 185, 129, 0.45)',
-                  boxShadow: '0 8px 30px rgba(16, 185, 129, 0.14)',
+                  bgcolor: 'rgba(58, 156, 116, 0.08)',
+                  border: '1px solid rgba(58, 156, 116, 0.3)',
                   height: '100%'
                 }}
               >
                 <CardContent sx={{ py: 2, px: 2.5 }}>
-                  <Typography variant="caption" sx={{ color: '#6EE7B7', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>
+                  <Typography variant="caption" sx={{ color: '#8CCBB0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>
                     Total no Período
                   </Typography>
                   <Typography variant={isMobile ? 'h4' : 'h4'} sx={{ fontWeight: 800, color: '#F8FAFC', mt: 0.5, fontVariantNumeric: 'tabular-nums' }}>
@@ -1884,9 +1896,9 @@ export default function App({ onNavigateStage }) {
             </Grid>
 
             <Grid size={{ xs: 6, sm: 4 }}>
-              <Card sx={{ height: '100%', border: '1px solid rgba(56, 189, 248, 0.25)' }}>
+              <Card sx={{ height: '100%', border: '1px solid rgba(91, 155, 213, 0.25)' }}>
                 <CardContent sx={{ py: 2, px: 2 }}>
-                  <Typography variant="caption" sx={{ color: '#38BDF8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8 }}>
+                  <Typography variant="caption" sx={{ color: '#5B9BD5', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8 }}>
                     Onde Mais Gasta
                   </Typography>
                   <Typography variant={isMobile ? 'subtitle1' : 'h6'} sx={{ fontWeight: 800, color: '#F8FAFC', mt: 0.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -1945,7 +1957,7 @@ export default function App({ onNavigateStage }) {
                   flexWrap: 'wrap',
                   justifyContent: { xs: 'center', sm: 'flex-start' },
                   width: { xs: '100%', sm: 'auto' },
-                  bgcolor: 'rgba(9, 13, 22, 0.7)',
+                  bgcolor: 'rgba(13, 16, 20, 0.7)',
                   '& .MuiToggleButton-root': {
                     color: '#94A3B8',
                     borderColor: 'rgba(148,163,184,0.15)',
@@ -1954,9 +1966,9 @@ export default function App({ onNavigateStage }) {
                     fontSize: { xs: '0.72rem', sm: '0.8rem' },
                     fontWeight: 700,
                     '&.Mui-selected': {
-                      bgcolor: 'rgba(16, 185, 129, 0.2)',
-                      color: '#34D399',
-                      borderColor: '#10B981'
+                      bgcolor: 'rgba(58, 156, 116, 0.2)',
+                      color: '#5BB591',
+                      borderColor: '#3A9C74'
                     }
                   }
                 }}
@@ -2004,9 +2016,9 @@ export default function App({ onNavigateStage }) {
                           onClick={() => setDimensaoHexagono(dim.id)}
                           sx={{
                             fontWeight: 700,
-                            bgcolor: dimensaoHexagono === dim.id ? 'rgba(56, 189, 248, 0.2)' : 'rgba(15, 23, 42, 0.7)',
-                            color: dimensaoHexagono === dim.id ? '#38BDF8' : '#94A3B8',
-                            border: dimensaoHexagono === dim.id ? '1px solid #38BDF8' : '1px solid rgba(148,163,184,0.18)'
+                            bgcolor: dimensaoHexagono === dim.id ? 'rgba(91, 155, 213, 0.2)' : 'rgba(15, 23, 42, 0.7)',
+                            color: dimensaoHexagono === dim.id ? '#5B9BD5' : '#94A3B8',
+                            border: dimensaoHexagono === dim.id ? '1px solid #5B9BD5' : '1px solid rgba(148,163,184,0.18)'
                           }}
                         />
                       ))}
@@ -2016,8 +2028,7 @@ export default function App({ onNavigateStage }) {
                       <Grid size={{ xs: 12, md: 7 }}>
                         <Box
                           sx={{
-                            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, rgba(9, 13, 22, 0) 70%)',
-                            borderRadius: 3,
+                            borderRadius: 1.5,
                             py: 1
                           }}
                         >
@@ -2037,12 +2048,12 @@ export default function App({ onNavigateStage }) {
                               <Radar
                                 name="Dominância de Gasto"
                                 dataKey="score"
-                                stroke="#10B981"
+                                stroke="#3A9C74"
                                 strokeWidth={3}
-                                fill="#10B981"
+                                fill="#3A9C74"
                                 fillOpacity={0.35}
-                                dot={{ r: 5, fill: '#34D399', stroke: '#052E16', strokeWidth: 2 }}
-                                activeDot={{ r: 7, fill: '#38BDF8' }}
+                                dot={{ r: 5, fill: '#5BB591', stroke: '#052E16', strokeWidth: 2 }}
+                                activeDot={{ r: 7, fill: '#5B9BD5' }}
                               />
                               <RechartsTooltip content={<CustomChartTooltip />} />
                             </RadarChart>
@@ -2055,10 +2066,9 @@ export default function App({ onNavigateStage }) {
                         <Box
                           sx={{
                             p: 2,
-                            borderRadius: 3,
-                            background: 'linear-gradient(145deg, rgba(15, 23, 42, 0.95) 0%, rgba(9, 13, 22, 0.95) 100%)',
-                            border: '1px solid rgba(16, 185, 129, 0.3)',
-                            boxShadow: 'inset 0 0 24px rgba(16, 185, 129, 0.08)'
+                            borderRadius: 1.5,
+                            bgcolor: 'rgba(13, 16, 20, 0.6)',
+                            border: '1px solid rgba(148, 163, 184, 0.16)'
                           }}
                         >
                           {topAtributoHexagono && (
@@ -2067,22 +2077,21 @@ export default function App({ onNavigateStage }) {
                                 sx={{
                                   width: 54,
                                   height: 54,
-                                  borderRadius: 2.5,
-                                  background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                                  borderRadius: 1.5,
+                                  bgcolor: '#3A9C74',
                                   color: '#04130D',
                                   display: 'flex',
                                   flexDirection: 'column',
                                   alignItems: 'center',
                                   justifyContent: 'center',
-                                  fontWeight: 900,
-                                  boxShadow: '0 0 16px rgba(16, 185, 129, 0.4)'
+                                  fontWeight: 900
                                 }}
                               >
                                 <Typography sx={{ fontSize: '1.25rem', fontWeight: 900, lineHeight: 1 }}>99</Typography>
                                 <Typography sx={{ fontSize: '0.55rem', fontWeight: 800, letterSpacing: 0.5 }}>TOP #1</Typography>
                               </Box>
                               <Box sx={{ minWidth: 0 }}>
-                                <Typography variant="caption" sx={{ color: '#34D399', fontWeight: 700, textTransform: 'uppercase' }}>
+                                <Typography variant="caption" sx={{ color: '#5BB591', fontWeight: 700, textTransform: 'uppercase' }}>
                                   Maior Foco de Gasto
                                 </Typography>
                                 <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#F8FAFC', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -2107,7 +2116,7 @@ export default function App({ onNavigateStage }) {
                                           px: 0.7,
                                           py: 0.1,
                                           borderRadius: 1,
-                                          bgcolor: 'rgba(16, 185, 129, 0.18)',
+                                          bgcolor: 'rgba(58, 156, 116, 0.18)',
                                           color: cor,
                                           fontWeight: 800,
                                           fontSize: '0.72rem',
@@ -2129,11 +2138,11 @@ export default function App({ onNavigateStage }) {
                                     value={attr.score}
                                     sx={{
                                       height: 6,
-                                      borderRadius: 3,
+                                      borderRadius: 1.5,
                                       bgcolor: 'rgba(148, 163, 184, 0.12)',
                                       '& .MuiLinearProgress-bar': {
                                         bgcolor: cor,
-                                        borderRadius: 3
+                                        borderRadius: 1.5
                                       }
                                     }}
                                   />
@@ -2167,8 +2176,8 @@ export default function App({ onNavigateStage }) {
                       >
                         <defs>
                           <linearGradient id="colorMensal" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#10B981" stopOpacity={0.5} />
-                            <stop offset="95%" stopColor="#10B981" stopOpacity={0.0} />
+                            <stop offset="5%" stopColor="#3A9C74" stopOpacity={0.5} />
+                            <stop offset="95%" stopColor="#3A9C74" stopOpacity={0.0} />
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.12)" />
@@ -2178,12 +2187,12 @@ export default function App({ onNavigateStage }) {
                         <Area
                           type="monotone"
                           dataKey="value"
-                          stroke="#10B981"
+                          stroke="#3A9C74"
                           strokeWidth={3}
                           fillOpacity={1}
                           fill="url(#colorMensal)"
-                          dot={{ r: 5, fill: '#10B981', stroke: '#090D16', strokeWidth: 2, cursor: 'pointer' }}
-                          activeDot={{ r: 7, fill: '#38BDF8', cursor: 'pointer' }}
+                          dot={{ r: 5, fill: '#3A9C74', stroke: '#0D1014', strokeWidth: 2, cursor: 'pointer' }}
+                          activeDot={{ r: 7, fill: '#5B9BD5', cursor: 'pointer' }}
                         />
                       </AreaChart>
                     </ResponsiveContainer>
@@ -2202,15 +2211,15 @@ export default function App({ onNavigateStage }) {
                             sx={{
                               minWidth: 125,
                               p: 1.25,
-                              borderRadius: 2.5,
+                              borderRadius: 1.5,
                               cursor: 'pointer',
-                              bgcolor: ativo ? 'rgba(16, 185, 129, 0.18)' : 'rgba(9, 13, 22, 0.6)',
-                              border: ativo ? '1.5px solid #10B981' : '1px solid rgba(148, 163, 184, 0.14)',
+                              bgcolor: ativo ? 'rgba(58, 156, 116, 0.18)' : 'rgba(13, 16, 20, 0.6)',
+                              border: ativo ? '1.5px solid #3A9C74' : '1px solid rgba(148, 163, 184, 0.14)',
                               flexShrink: 0,
-                              '&:hover': { borderColor: '#10B981' }
+                              '&:hover': { borderColor: '#3A9C74' }
                             }}
                           >
-                            <Typography variant="caption" sx={{ color: ativo ? '#34D399' : '#94A3B8', fontWeight: 700, display: 'block' }}>
+                            <Typography variant="caption" sx={{ color: ativo ? '#5BB591' : '#94A3B8', fontWeight: 700, display: 'block' }}>
                               {m.fullName}
                             </Typography>
                             <Typography variant="body2" sx={{ fontWeight: 800, color: '#F8FAFC', mt: 0.25 }}>
@@ -2242,7 +2251,7 @@ export default function App({ onNavigateStage }) {
                           tick={{ fontSize: isMobile ? 11 : 12, fontWeight: 600, fill: '#E2E8F0' }}
                         />
                         <RechartsTooltip content={<CustomChartTooltip />} />
-                        <Bar dataKey="value" radius={[0, 6, 6, 0]}>
+                        <Bar dataKey="value" radius={[0, 2, 2, 0]}>
                           {dadosGrafico.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={NEON_COLORS[index % NEON_COLORS.length]} />
                           ))}
@@ -2253,17 +2262,17 @@ export default function App({ onNavigateStage }) {
                     {/* Metas de Orçamento configuradas */}
                     {dadosGrafico.some(d => d.orcamento > 0) && (
                       <Box sx={{ mt: 2.5, pt: 2, borderTop: '1px solid rgba(148,163,184,0.12)' }}>
-                        <Typography variant="subtitle2" sx={{ mb: 1.5, color: '#34D399', fontWeight: 700 }}>
+                        <Typography variant="subtitle2" sx={{ mb: 1.5, color: '#5BB591', fontWeight: 700 }}>
                           🎯 Acompanhamento de Metas Mensais
                         </Typography>
                         <Grid container spacing={1.5}>
                           {dadosGrafico.filter(d => d.orcamento > 0).map(d => {
                             const pct = Math.min(100, Math.round((d.value / d.orcamento) * 100));
                             const estourou = d.value > d.orcamento;
-                            const corBarra = estourou ? '#F43F5E' : pct >= 80 ? '#F59E0B' : '#10B981';
+                            const corBarra = estourou ? '#F43F5E' : pct >= 80 ? '#F59E0B' : '#3A9C74';
                             return (
                               <Grid size={{ xs: 12, sm: 6 }} key={d.name}>
-                                <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: 'rgba(9,13,22,0.6)', border: '1px solid rgba(148,163,184,0.14)' }}>
+                                <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: 'rgba(13, 16, 20,0.6)', border: '1px solid rgba(148,163,184,0.14)' }}>
                                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                                     <Typography variant="caption" sx={{ fontWeight: 700, color: '#F8FAFC' }}>{d.name}</Typography>
                                     <Typography variant="caption" sx={{ fontWeight: 700, color: corBarra }}>
@@ -2275,7 +2284,7 @@ export default function App({ onNavigateStage }) {
                                     value={pct}
                                     sx={{
                                       height: 7,
-                                      borderRadius: 4,
+                                      borderRadius: 1.5,
                                       bgcolor: 'rgba(148,163,184,0.15)',
                                       '& .MuiLinearProgress-bar': { bgcolor: corBarra }
                                     }}
@@ -2306,7 +2315,7 @@ export default function App({ onNavigateStage }) {
                         label={isMobile ? false : ({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
                       >
                         {dadosGrafico.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={NEON_COLORS[index % NEON_COLORS.length]} stroke="rgba(9,13,22,0.8)" strokeWidth={2} />
+                          <Cell key={`cell-${index}`} fill={NEON_COLORS[index % NEON_COLORS.length]} stroke="rgba(13, 16, 20,0.8)" strokeWidth={2} />
                         ))}
                       </Pie>
                       <RechartsTooltip content={<CustomChartTooltip />} />
@@ -2324,8 +2333,8 @@ export default function App({ onNavigateStage }) {
                           <Box
                             sx={{
                               p: 2,
-                              borderRadius: 3,
-                              bgcolor: 'rgba(9, 13, 22, 0.65)',
+                              borderRadius: 1.5,
+                              bgcolor: 'rgba(13, 16, 20, 0.65)',
                               border: `1px solid ${cor}55`,
                               display: 'flex',
                               flexDirection: 'column',
@@ -2353,7 +2362,7 @@ export default function App({ onNavigateStage }) {
                               value={Number(cta.percent)}
                               sx={{
                                 height: 5,
-                                borderRadius: 3,
+                                borderRadius: 1.5,
                                 bgcolor: 'rgba(148,163,184,0.12)',
                                 '& .MuiLinearProgress-bar': { bgcolor: cor }
                               }}
@@ -2373,9 +2382,9 @@ export default function App({ onNavigateStage }) {
                       label="Todas"
                       onClick={() => setSelectedTipos(metadados.tipos || [])}
                       sx={{
-                        bgcolor: 'rgba(16, 185, 129, 0.12)',
-                        color: '#34D399',
-                        border: '1px solid rgba(16, 185, 129, 0.45)',
+                        bgcolor: 'rgba(58, 156, 116, 0.12)',
+                        color: '#5BB591',
+                        border: '1px solid rgba(58, 156, 116, 0.45)',
                         fontWeight: 700,
                         fontSize: '0.72rem'
                       }}
@@ -2393,7 +2402,7 @@ export default function App({ onNavigateStage }) {
                         avatar={<Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: ativo ? color : '#475569', ml: '6px !important' }} />}
                         label={`${cat.name}: R$ ${formatarMoeda(cat.value)} (${cat.percent}%)`}
                         sx={{
-                          bgcolor: ativo ? 'rgba(9, 13, 22, 0.7)' : 'transparent',
+                          bgcolor: ativo ? 'rgba(13, 16, 20, 0.7)' : 'transparent',
                           color: ativo ? '#E2E8F0' : '#64748B',
                           border: ativo ? `1px solid ${color}66` : '1px dashed rgba(148, 163, 184, 0.25)',
                           fontWeight: 600,
@@ -2464,8 +2473,8 @@ export default function App({ onNavigateStage }) {
                       onClick={() => handleAbrirDetalhes(gasto)}
                       sx={{
                         p: 1.6,
-                        borderRadius: 3,
-                        bgcolor: 'rgba(9, 13, 22, 0.72)',
+                        borderRadius: 1.5,
+                        bgcolor: 'rgba(13, 16, 20, 0.72)',
                         border: '1px solid rgba(148, 163, 184, 0.14)',
                         display: 'flex',
                         justifyContent: 'space-between',
@@ -2473,7 +2482,7 @@ export default function App({ onNavigateStage }) {
                         gap: 1.5,
                         cursor: 'pointer',
                         transition: 'all 0.15s ease',
-                        '&:active': { transform: 'scale(0.99)', borderColor: '#10B981' }
+                        '&:active': { transform: 'scale(0.99)', borderColor: '#3A9C74' }
                       }}
                     >
                       <Box sx={{ minWidth: 0, flexGrow: 1 }}>
@@ -2494,7 +2503,7 @@ export default function App({ onNavigateStage }) {
                             {gasto.data ? new Date(gasto.data + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}
                           </Typography>
                           {gasto.fixo && (
-                            <RepeatIcon sx={{ fontSize: 14, color: '#38BDF8' }} titleAccess="Gasto Fixo" />
+                            <RepeatIcon sx={{ fontSize: 14, color: '#5B9BD5' }} titleAccess="Gasto Fixo" />
                           )}
                         </Box>
 
@@ -2538,7 +2547,7 @@ export default function App({ onNavigateStage }) {
                       </Box>
 
                       <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#10B981', fontVariantNumeric: 'tabular-nums' }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#3A9C74', fontVariantNumeric: 'tabular-nums' }}>
                           R$ {formatarMoeda(gasto.valor)}
                         </Typography>
                       </Box>
@@ -2590,8 +2599,8 @@ export default function App({ onNavigateStage }) {
                     ).map(([catGroup, items]) => (
                       <React.Fragment key={catGroup}>
                         {isGroupedByCategory && (
-                          <TableRow sx={{ bgcolor: 'rgba(16, 185, 129, 0.08)' }}>
-                            <TableCell colSpan={6} sx={{ fontWeight: 800, color: '#34D399' }}>
+                          <TableRow sx={{ bgcolor: 'rgba(58, 156, 116, 0.08)' }}>
+                            <TableCell colSpan={6} sx={{ fontWeight: 800, color: '#5BB591' }}>
                               {catGroup} ({items.length} itens)
                             </TableCell>
                           </TableRow>
@@ -2614,7 +2623,7 @@ export default function App({ onNavigateStage }) {
                                     {gasto.nome}
                                   </Typography>
                                   {gasto.fixo && (
-                                    <RepeatIcon sx={{ fontSize: 15, color: '#38BDF8' }} titleAccess="Gasto Fixo" />
+                                    <RepeatIcon sx={{ fontSize: 15, color: '#5B9BD5' }} titleAccess="Gasto Fixo" />
                                   )}
                                 </Box>
                                 {gasto.descricao && (
@@ -2664,7 +2673,7 @@ export default function App({ onNavigateStage }) {
                               <TableCell sx={{ color: '#CBD5E1', fontSize: '0.85rem' }}>
                                 {gasto.conta}
                               </TableCell>
-                              <TableCell align="right" sx={{ fontWeight: 800, color: '#10B981', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
+                              <TableCell align="right" sx={{ fontWeight: 800, color: '#3A9C74', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
                                 R$ {formatarMoeda(gasto.valor)}
                               </TableCell>
                             </TableRow>
@@ -2698,16 +2707,15 @@ export default function App({ onNavigateStage }) {
             left: 12,
             right: 12,
             zIndex: 1000,
-            borderRadius: 4,
+            borderRadius: 1.5,
             py: 1,
             px: 2,
             bgcolor: 'rgba(15, 23, 42, 0.92)',
-            backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(16, 185, 129, 0.35)',
+            border: '1px solid rgba(148, 163, 184, 0.18)',
             display: 'flex',
             justifyContent: 'space-around',
             alignItems: 'center',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.65)'
+            boxShadow: '0 4px 12px rgba(0,0,0,0.4)'
           }}
         >
           <IconButton
@@ -2729,7 +2737,7 @@ export default function App({ onNavigateStage }) {
             onClick={() => { setGastoParaEditar(null); setFormAberto(true); }}
             sx={{
               mt: -3,
-              boxShadow: '0 0 20px rgba(16, 185, 129, 0.6)'
+              boxShadow: 'none'
             }}
           >
             <AddIcon />
@@ -2798,7 +2806,7 @@ export default function App({ onNavigateStage }) {
         fullScreen={isMobile}
       >
         <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
-          <Typography variant="h6" component="div" sx={{ fontWeight: 800, color: '#10B981' }}>
+          <Typography variant="h6" component="div" sx={{ fontWeight: 800, color: '#3A9C74' }}>
             Detalhes do Lançamento
           </Typography>
           <IconButton onClick={() => setModalDetalhesAberto(false)} size="small">
@@ -2828,12 +2836,12 @@ export default function App({ onNavigateStage }) {
                 </Box>
               )}
 
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2, p: 1.5, borderRadius: 2.5, bgcolor: 'rgba(9,13,22,0.65)', border: '1px solid rgba(148,163,184,0.14)' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2, p: 1.5, borderRadius: 1.5, bgcolor: 'rgba(13, 16, 20,0.65)', border: '1px solid rgba(148,163,184,0.14)' }}>
                 <Box>
                   <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', fontWeight: 700 }}>
                     Valor
                   </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 800, color: '#10B981', mt: 0.25 }}>
+                  <Typography variant="h5" sx={{ fontWeight: 800, color: '#3A9C74', mt: 0.25 }}>
                     R$ {formatarMoeda(selectedGasto.valor)}
                   </Typography>
                 </Box>
@@ -2871,9 +2879,9 @@ export default function App({ onNavigateStage }) {
                     label={selectedGasto.conta}
                     size="small"
                     sx={{
-                      bgcolor: 'rgba(56, 189, 248, 0.14)',
-                      border: '1px solid rgba(56, 189, 248, 0.35)',
-                      color: '#7DD3FC',
+                      bgcolor: 'rgba(91, 155, 213, 0.14)',
+                      border: '1px solid rgba(91, 155, 213, 0.35)',
+                      color: '#93BDE3',
                       fontWeight: 700
                     }}
                   />
@@ -2884,7 +2892,7 @@ export default function App({ onNavigateStage }) {
               <Box
                 sx={{
                   p: 1.75,
-                  borderRadius: 3,
+                  borderRadius: 1.5,
                   bgcolor: 'rgba(15, 23, 42, 0.8)',
                   border: '1px solid rgba(244, 63, 94, 0.3)'
                 }}
@@ -2912,7 +2920,7 @@ export default function App({ onNavigateStage }) {
                       rel="noopener noreferrer"
                       endIcon={<OpenInNewIcon fontSize="small" />}
                       sx={{
-                        background: 'linear-gradient(135deg, #F43F5E 0%, #E11D48 100%)',
+                        bgcolor: '#E11D48',
                         color: '#fff',
                         fontWeight: 700
                       }}
@@ -2923,7 +2931,7 @@ export default function App({ onNavigateStage }) {
                 </Box>
 
                 {selectedGasto.localizacao && (
-                  <Box sx={{ borderRadius: 2, overflow: 'hidden', border: '1px solid rgba(148,163,184,0.2)', height: 190 }}>
+                  <Box sx={{ borderRadius: 1, overflow: 'hidden', border: '1px solid rgba(148,163,184,0.2)', height: 190 }}>
                     <iframe
                       title="Mapa do Local da Compra"
                       width="100%"

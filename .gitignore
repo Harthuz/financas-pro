@@ -11,6 +11,9 @@ gastos_backup_*.csv
 notion_export.json
 notion_search_raw.json
 backend/notion_export.json
+backups/
+classificacao*.json
+conciliacao*.json
 
 # Configs locais / da máquina
 supabase/.temp/

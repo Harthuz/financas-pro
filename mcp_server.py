@@ -373,6 +373,25 @@ def comitar_stage(apenas_completos: Optional[bool] = True) -> str:
     except Exception as e:
         return f"Erro ao comitar stage: {str(e)}"
 
+@app.tool()
+def obter_planejamento() -> str:
+    """Consulta o saldo bancário do Pluggy e previsões financeiras registradas.
+    Investimentos com saldo zerado são omitidos e não devem ser listados ao usuário.
+    """
+    res = requests.post(f"{API_BASE_URL}/mcp/tools/obter_planejamento", json={}, timeout=60)
+    res.raise_for_status()
+    return json.dumps(res.json(), ensure_ascii=False)
+
+@app.tool()
+def registrar_previsao_financeira(nome: str, valor_meta: float, data_meta: str, analise: str, premissas: str, projecao: List[Dict[str, Any]], base_calculo: str = 'patrimonio_liquido') -> str:
+    """Registra análise do agente. Consulte saldo e gastos, explicite premissas e incertezas.
+    Projeção: meses YYYY-MM ordenados até a meta, entradas, saidas, rendimentos e saldo.
+    Não invente receitas ou rendimentos. Cada chamada registra uma versão independente.
+    """
+    res = requests.post(f"{API_BASE_URL}/mcp/tools/registrar_previsao_financeira", json=dict(nome=nome, valor_meta=valor_meta, data_meta=data_meta, analise=analise, premissas=premissas, projecao=projecao, base_calculo=base_calculo), timeout=60)
+    res.raise_for_status()
+    return json.dumps(res.json(), ensure_ascii=False)
+
 if __name__ == "__main__":
     import sys
     transport = os.getenv("MCP_TRANSPORT", "stdio")

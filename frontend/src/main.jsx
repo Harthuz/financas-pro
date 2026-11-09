@@ -6,6 +6,7 @@ import theme from './theme'
 import './index.css'
 import App from './App.jsx'
 import StagePage from './StagePage.jsx'
+import PlanningPage from './PlanningPage.jsx'
 
 function RootRouter() {
   const [pathname, setPathname] = useState(window.location.pathname);
@@ -24,15 +25,19 @@ function RootRouter() {
 
   const isStage = pathname === '/stage' || pathname.startsWith('/stage/');
 
+  const isPlanning = pathname === '/planejamento';
+
   useEffect(() => {
-    document.title = isStage ? 'Stage • Finanças Pro' : 'Finanças Pro';
-  }, [isStage]);
+    document.title = isStage ? 'Stage • Finanças Pro' : isPlanning ? 'Meu futuro financeiro • Finanças Pro' : 'Finanças Pro';
+  }, [isStage, isPlanning]);
+
+  if (isPlanning) return <PlanningPage onNavigateHome={() => navigate('/')} />;
 
   if (isStage) {
     return <StagePage onNavigateHome={() => navigate('/')} />;
   }
 
-  return <App onNavigateStage={() => navigate('/stage')} />;
+  return <App onNavigateStage={() => navigate('/stage')} onNavigatePlanning={() => navigate('/planejamento')} />;
 }
 
 createRoot(document.getElementById('root')).render(
