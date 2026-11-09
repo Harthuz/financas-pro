@@ -19,8 +19,12 @@ Este arquivo serve como guia rápido para comandos comuns e regras de estilo do 
 - **Executar Linter:** `npm run lint`
 
 ### Docker
-- **Subir a aplicação completa:** `docker compose up --build`
+- **Subir a aplicação completa (interativo):** `docker compose up --build`
+- **Subir em segundo plano (detached):** `docker compose up -d --build`
+- **Verificar status dos containers:** `docker compose ps`
+- **Acompanhar logs dos serviços:** `docker compose logs -f`
 - **Parar e remover os containers:** `docker compose down`
+- **Parar e remover volumes:** `docker compose down -v` (CUIDADO: apaga todos os dados do PostgreSQL)
 
 ## Estilo de Código e Diretrizes
 

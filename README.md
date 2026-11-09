@@ -86,6 +86,17 @@ docker compose up -d --build
 | Diretrizes para agentes | http://localhost:8084 |
 | PostgreSQL | `localhost:5433` (usuário/senha `postgres`) |
 
+Comandos úteis:
+
+```bash
+docker compose ps                         # status dos containers
+docker compose logs -f backend            # logs de um serviço
+docker compose up -d --build frontend     # recompila só um serviço
+docker compose down                       # para e remove os containers (mantém os dados)
+```
+
+> Evite `docker compose down -v`: apaga o volume do PostgreSQL com todos os lançamentos.
+
 ### Desenvolvimento
 
 ```bash
