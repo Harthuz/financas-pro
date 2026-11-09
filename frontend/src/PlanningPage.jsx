@@ -335,7 +335,7 @@ function PlanoCard({ plano, data }) {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.12)" />
-                <XAxis dataKey="mes" tick={AXIS_TICK} />
+                <XAxis dataKey="mes" tick={AXIS_TICK} minTickGap={24} />
                 <YAxis width={56} tick={AXIS_TICK} tickFormatter={v => `R$${moneyCompact(v)}`} />
                 <RechartsTooltip content={<ChartTooltip />} />
                 <ReferenceLine
@@ -355,7 +355,7 @@ function PlanoCard({ plano, data }) {
             <ResponsiveContainer>
               <BarChart data={p.projecao} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.12)" vertical={false} />
-                <XAxis dataKey="mes" tick={AXIS_TICK} />
+                <XAxis dataKey="mes" tick={AXIS_TICK} minTickGap={24} />
                 <YAxis width={56} tick={AXIS_TICK} tickFormatter={v => `R$${moneyCompact(v)}`} />
                 <RechartsTooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(148, 163, 184, 0.08)' }} />
                 <Bar dataKey="rendimentos" name="Rendimento previsto" fill="#5B9BD5" radius={[3, 3, 0, 0]} />

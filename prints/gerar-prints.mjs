@@ -113,10 +113,67 @@ const stage = {
   itens: stageItens
 };
 
+// Planejamento: saldos "do Pluggy", carteira, dívidas e uma meta com projeção mensal (tudo fictício)
+const ativos = [
+  ['CDB Liquidez Diária', 8420.55, 0.91],
+  ['Tesouro Selic 2029', 6150.2, 0.88],
+  ['LCI 12 meses', 4000, 0.79],
+  ['Fundo DI', 2310.42, 0.85],
+  ['CDB Prefixado 2027', 1500, null],
+  ['Fundo Encerrado', 0, null] // zerado: não deve aparecer
+].map(([nome, saldo, taxa_mes], i) => ({ id: `inv-${i}`, nome, saldo, data: '2026-11-08', taxa_mes }));
+const saldoPluggy = {
+  saldo_conta: 3240.18,
+  saldo_poupanca: 1800,
+  saldo: 5040.18,
+  contas: [{ id: 'c1', nome: 'Conta Corrente', saldo: 3240.18 }, { id: 'c2', nome: 'Poupança', saldo: 1800 }],
+  investimentos: { total: ativos.reduce((a, x) => a + x.saldo, 0), ativos },
+  erro_investimentos: null,
+  consultado_em: '2026-11-09T09:30:00.000Z'
+};
+const dividas = [
+  { id: 1, nome: 'Fatura Cartão de Crédito A', valor: 1890.4 },
+  { id: 2, nome: 'Financiamento Notebook', valor: 2400 }
+];
+const totalDividas = dividas.reduce((a, d) => a + d.valor, 0);
+const patrimonio = saldoPluggy.saldo + saldoPluggy.investimentos.total - totalDividas;
+const projecao = [];
+for (let i = 0, saldoMes = patrimonio; i < 26; i++) {
+  const d = new Date(2026, 11 + i, 1);
+  const entradas = 7800, saidas = 6100 + Math.round(rnd() * 500), rendimentos = Number((saldoMes * 0.0085).toFixed(2));
+  saldoMes = Number((saldoMes + entradas - saidas + rendimentos).toFixed(2));
+  projecao.push({ mes: `${d.getFullYear()}-${pad(d.getMonth() + 1)}`, entradas, saidas, rendimentos, saldo: saldoMes });
+}
+const planejamento = {
+  saldo: saldoPluggy,
+  erro_saldo: null,
+  dividas,
+  total_dividas: totalDividas,
+  patrimonio_bruto: patrimonio + totalDividas,
+  patrimonio_liquido: patrimonio,
+  planos: [{
+    id: 1,
+    criado_em: '2026-11-08T21:00:00.000Z',
+    documento: {
+      nome: 'Reserva para entrada do apartamento',
+      valor_meta: 60000,
+      data_meta: projecao.at(-1).mes + '-28',
+      analise: 'Mantendo a média de entradas líquidas e reduzindo restaurantes em 15%, a sobra mensal fica perto de R$ 1.500. Somando o rendimento da carteira (~0,85% a.m.), a meta é atingida no prazo com pequena folga.',
+      premissas: 'Salário líquido de R$ 7.800; gastos médios dos últimos 6 meses; quitação do notebook em 8 parcelas; rendimento de 100% do CDI.',
+      projecao,
+      saldo_base: { saldo: saldoPluggy.saldo, patrimonio_liquido: patrimonio, total_dividas: totalDividas },
+      base_calculo: 'patrimonio_liquido',
+      analisado_em: '2026-11-08T21:00:00.000Z'
+    }
+  }]
+};
+
 const respostas = {
+  '/api/planejamento': planejamento,
   '/api/gastos': gastos,
   '/api/metadados': metadados,
   '/api/stage': stage,
+  '/api/stage/pagina': { ...stage, total_filtrado: stageItens.length, pagina: 0, tamanho: 25 },
   '/api/categorias': tipos.map((nome, i) => ({ id: i + 1, nome, orcamento_mensal: metadados.orcamentos[nome] || 0 })),
   '/api/contas': contas.map((nome, i) => ({ id: i + 1, nome }))
 };
@@ -199,6 +256,32 @@ for (const [rota, nome] of [['/', '07-mobile-dashboard.png'], ['/stage', '08-mob
   await p.screenshot({ path: `${OUT}/${nome}` });
   await p.context().close();
 }
+
+// 9) Meu futuro financeiro (Pluggy + metas) — desktop
+p = await novaPagina({ width: 1440, height: 900 }, { deviceScaleFactor: 1.5 });
+await p.goto(BASE + '/planejamento', { waitUntil: 'networkidle' });
+await esperar(1200);
+await p.screenshot({ path: `${OUT}/09-futuro-financeiro.png` });
+
+// 10) Carteira expandida + meta com projeção
+await p.getByRole('button', { name: /Expandir/ }).first().click();
+await esperar(900);
+await p.locator('text=Carteira de investimentos').first().evaluate(el => el.scrollIntoView({ block: 'start' }));
+await p.evaluate(() => window.scrollBy(0, -24));
+await esperar(500);
+await p.screenshot({ path: `${OUT}/10-carteira-investimentos.png` });
+await p.locator('text=Reserva para entrada do apartamento').first().evaluate(el => el.scrollIntoView({ block: 'start' }));
+await p.evaluate(() => window.scrollBy(0, -40));
+await esperar(900);
+await p.screenshot({ path: `${OUT}/11-meta-projecao.png` });
+await p.context().close();
+
+// 12) Mobile planejamento
+p = await novaPagina({ width: 390, height: 844 }, { deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+await p.goto(BASE + '/planejamento', { waitUntil: 'networkidle' });
+await esperar(1000);
+await p.screenshot({ path: `${OUT}/12-mobile-futuro-financeiro.png` });
+await p.context().close();
 
 await b.close();
 console.log(`gastos fictícios: ${gastos.length} | stage: ${stageItens.length}`);
